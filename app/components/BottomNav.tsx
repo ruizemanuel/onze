@@ -3,12 +3,12 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { IconHome2, IconChartBar, IconRobot, IconUser } from "@tabler/icons-react";
+import { IconHome2, IconChartBar, IconSparkle2, IconUser } from "@tabler/icons-react";
 
 const tabs = [
   { href: "/play" as Route, label: "Home", Icon: IconHome2 },
   { href: "/leaderboard" as Route, label: "Ranking", Icon: IconChartBar },
-  { href: "/coach" as Route, label: "Coach", Icon: IconRobot },
+  { href: "/coach" as Route, label: "Coach", Icon: IconSparkle2 },
   { href: "/profile" as Route, label: "Profile", Icon: IconUser },
 ] as const;
 
