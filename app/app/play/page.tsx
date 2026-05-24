@@ -31,7 +31,16 @@ type MeRow = {
 };
 
 const LOCK_DATE = new Date("2026-05-16T14:00:00Z");
-const CURRENT_MW = 37;
+// MW37 ran Fri 15 May → Tue 19 May 2026; MW38 picks publish Wed 21 May and
+// the final fixtures play Sat 24 May. Flip CURRENT_MW from 37 → 38 once MW37
+// is done settling — Wed 20 May 00:00 UTC is the clean cutoff (after MW37's
+// last kickoff at 19:00 UTC on Tue 19, and before MW38 picks publish).
+const MW38_START = new Date("2026-05-20T00:00:00Z");
+const CURRENT_MW: 37 | 38 = Date.now() >= MW38_START.getTime() ? 38 : 37;
+const MW_END_LABEL: Record<37 | 38, string> = {
+  37: "Through Tue 19 May",
+  38: "Through Sat 24 May",
+};
 
 function partsBetween(target: Date, now: Date) {
   const ms = Math.max(0, target.getTime() - now.getTime());
@@ -145,7 +154,7 @@ export default function MyTeamPage() {
 
   const lockParts = partsBetween(LOCK_DATE, now);
   const isLocked = lockParts.expired;
-  const statusLabel = isLocked ? "MW37 LIVE" : "LOCKS IN";
+  const statusLabel = isLocked ? `MW${CURRENT_MW} LIVE` : "LOCKS IN";
   const statusValue = isLocked
     ? "Live"
     : `${String(lockParts.days).padStart(2, "0")}d ${String(lockParts.hours).padStart(2, "0")}h ${String(lockParts.mins).padStart(2, "0")}m`;
@@ -207,8 +216,10 @@ export default function MyTeamPage() {
           </h1>
           <p className="mt-2 text-sm text-white/50">
             {isLocked
-              ? "MW37 is in progress. Your lineup is locked."
-              : `MW37 kicks off in ${lockParts.days}d ${lockParts.hours}h. Lineup locked.`}
+              ? hasLineup
+                ? `MW${CURRENT_MW} is in progress. Your lineup is locked.`
+                : `MW${CURRENT_MW} is in progress. Entries are closed.`
+              : `MW${CURRENT_MW} kicks off in ${lockParts.days}d ${lockParts.hours}h. Lineup locked.`}
           </p>
         </section>
 
@@ -270,14 +281,24 @@ export default function MyTeamPage() {
                 <Stat
                   label="Score"
                   value={String(totalScore)}
-                  sub={isLocked ? "MW37 live" : "yet to play"}
+                  sub={
+                    !isLocked
+                      ? "yet to play"
+                      : cachedTotal > 0
+                        ? `Through MW${CURRENT_MW}`
+                        : `MW${CURRENT_MW} live`
+                  }
                 />
                 <Stat
                   label="Rank"
                   value={rankLabel}
                   sub={showRank ? "of all players" : "after first points"}
                 />
-                <Stat label={statusLabel} value={statusValue} sub="Sat 16 May" />
+                <Stat
+                  label={statusLabel}
+                  value={statusValue}
+                  sub={MW_END_LABEL[CURRENT_MW]}
+                />
               </div>
             </section>
 
@@ -294,7 +315,7 @@ export default function MyTeamPage() {
                   const assists = live?.stats[id]?.assists ?? 0;
                   const subline =
                     !isLocked
-                      ? "MW37 yet to start"
+                      ? `MW${CURRENT_MW} yet to start`
                       : mins === 0
                       ? "Yet to play"
                       : `${mins}'  ·  ${goals}G ${assists}A`;
