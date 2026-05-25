@@ -32,14 +32,18 @@ type MeRow = {
 
 const LOCK_DATE = new Date("2026-05-16T14:00:00Z");
 // MW37 ran Fri 15 May → Tue 19 May 2026; MW38 picks publish Wed 21 May and
-// the final fixtures play Sat 24 May. Flip CURRENT_MW from 37 → 38 once MW37
+// the final fixtures play Sun 24 May. Flip CURRENT_MW from 37 → 38 once MW37
 // is done settling — Wed 20 May 00:00 UTC is the clean cutoff (after MW37's
 // last kickoff at 19:00 UTC on Tue 19, and before MW38 picks publish).
 const MW38_START = new Date("2026-05-20T00:00:00Z");
 const CURRENT_MW: 37 | 38 = Date.now() >= MW38_START.getTime() ? 38 : 37;
 const MW_END_LABEL: Record<37 | 38, string> = {
   37: "Through Tue 19 May",
-  38: "Through Sat 24 May",
+  38: "Through Sun 24 May",
+};
+const MW_ENDED_LABEL: Record<37 | 38, string> = {
+  37: "Ended Tue 19 May",
+  38: "Ended Sun 24 May",
 };
 
 function partsBetween(target: Date, now: Date) {
@@ -154,10 +158,20 @@ export default function MyTeamPage() {
 
   const lockParts = partsBetween(LOCK_DATE, now);
   const isLocked = lockParts.expired;
-  const statusLabel = isLocked ? `MW${CURRENT_MW} LIVE` : "LOCKS IN";
-  const statusValue = isLocked
-    ? "Live"
-    : `${String(lockParts.days).padStart(2, "0")}d ${String(lockParts.hours).padStart(2, "0")}h ${String(lockParts.mins).padStart(2, "0")}m`;
+  const finalized = pool.isFinalized;
+  const statusLabel = finalized
+    ? `MW${CURRENT_MW} FINAL`
+    : isLocked
+      ? `MW${CURRENT_MW} LIVE`
+      : "LOCKS IN";
+  const statusValue = finalized
+    ? "Settled"
+    : isLocked
+      ? "Live"
+      : `${String(lockParts.days).padStart(2, "0")}d ${String(lockParts.hours).padStart(2, "0")}h ${String(lockParts.mins).padStart(2, "0")}m`;
+  const statusSub = finalized
+    ? MW_ENDED_LABEL[CURRENT_MW]
+    : MW_END_LABEL[CURRENT_MW];
 
   const currentMwPoints = useMemo(() => {
     if (!live || ids.length === 0) return 0;
@@ -204,22 +218,42 @@ export default function MyTeamPage() {
         </header>
 
         <section className="pt-6">
-          <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[#00DF7C]">
+          <div
+            className={
+              "flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.2em] " +
+              (finalized ? "text-[#F5C842]" : "text-[#00DF7C]")
+            }
+          >
             <span
-              className="size-1.5 rounded-full bg-[#00DF7C] shadow-[0_0_8px_#00DF7C]"
+              className={
+                "size-1.5 rounded-full " +
+                (finalized
+                  ? "bg-[#F5C842] shadow-[0_0_8px_#F5C842]"
+                  : "bg-[#00DF7C] shadow-[0_0_8px_#00DF7C]")
+              }
               aria-hidden
             />
-            <span>{isLocked ? "Tournament Live" : "Pre-tournament"}</span>
+            <span>
+              {finalized
+                ? "Tournament settled"
+                : isLocked
+                  ? "Tournament Live"
+                  : "Pre-tournament"}
+            </span>
           </div>
           <h1 className="font-display mt-1 text-4xl leading-none tracking-tight">
             My Team
           </h1>
           <p className="mt-2 text-sm text-white/50">
-            {isLocked
+            {finalized
               ? hasLineup
-                ? `MW${CURRENT_MW} is in progress. Your lineup is locked.`
-                : `MW${CURRENT_MW} is in progress. Entries are closed.`
-              : `MW${CURRENT_MW} kicks off in ${lockParts.days}d ${lockParts.hours}h. Lineup locked.`}
+                ? `MW${CURRENT_MW} settled. Your final lineup is below.`
+                : `MW${CURRENT_MW} settled. You didn't join this tournament.`
+              : isLocked
+                ? hasLineup
+                  ? `MW${CURRENT_MW} is in progress. Your lineup is locked.`
+                  : `MW${CURRENT_MW} is in progress. Entries are closed.`
+                : `MW${CURRENT_MW} kicks off in ${lockParts.days}d ${lockParts.hours}h. Lineup locked.`}
           </p>
         </section>
 
@@ -282,11 +316,13 @@ export default function MyTeamPage() {
                   label="Score"
                   value={String(totalScore)}
                   sub={
-                    !isLocked
-                      ? "yet to play"
-                      : cachedTotal > 0
-                        ? `Through MW${CURRENT_MW}`
-                        : `MW${CURRENT_MW} live`
+                    finalized
+                      ? "Tournament final"
+                      : !isLocked
+                        ? "yet to play"
+                        : cachedTotal > 0
+                          ? `Through MW${CURRENT_MW}`
+                          : `MW${CURRENT_MW} live`
                   }
                 />
                 <Stat
@@ -297,7 +333,7 @@ export default function MyTeamPage() {
                 <Stat
                   label={statusLabel}
                   value={statusValue}
-                  sub={MW_END_LABEL[CURRENT_MW]}
+                  sub={statusSub}
                 />
               </div>
             </section>
@@ -313,12 +349,15 @@ export default function MyTeamPage() {
                   const mins = live?.stats[id]?.minutes ?? 0;
                   const goals = live?.stats[id]?.goals ?? 0;
                   const assists = live?.stats[id]?.assists ?? 0;
-                  const subline =
-                    !isLocked
+                  const subline = finalized
+                    ? mins === 0
+                      ? "Did not play"
+                      : `${mins}'  ·  ${goals}G ${assists}A`
+                    : !isLocked
                       ? `MW${CURRENT_MW} yet to start`
                       : mins === 0
-                      ? "Yet to play"
-                      : `${mins}'  ·  ${goals}G ${assists}A`;
+                        ? "Yet to play"
+                        : `${mins}'  ·  ${goals}G ${assists}A`;
                   return (
                     <PlayerRow
                       key={`${id}-${i}`}
