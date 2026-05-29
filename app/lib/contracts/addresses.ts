@@ -1,10 +1,10 @@
 export type Network = "alfajores" | "celo" | "celo-sepolia";
 
-export const CHAIN_ID: Record<Network, number> = {
+export const CHAIN_ID = {
   celo: 42220,
   alfajores: 44787,
   "celo-sepolia": 11142220,
-};
+} as const satisfies Record<Network, number>;
 
 export const ADDRESSES = {
   alfajores: {

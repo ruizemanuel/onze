@@ -3,17 +3,17 @@
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from "wagmi";
 import { erc20Abi, parseUnits } from "viem";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
-import { ADDRESSES, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
+import { ADDRESSES, DEFAULT_NETWORK, CHAIN_ID } from "@/lib/contracts/addresses";
+import { useActiveTournament } from "@/hooks/useActiveTournament";
 
-const CHAIN_ID = {
-  celo: 42220,
-  alfajores: 44787,
-  "celo-sepolia": 11142220,
-} as const;
+const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
-export function usePool() {
+export function usePool(poolAddrParam?: `0x${string}`) {
   const network = DEFAULT_NETWORK;
-  const poolAddr = ADDRESSES[network].pick5Pool as `0x${string}`;
+  // Default to the factory's active tournament; an explicit address (Tanda 3.2
+  // per-tournament routing) skips the factory reads.
+  const active = useActiveTournament(!poolAddrParam);
+  const poolAddr = (poolAddrParam ?? active.poolAddr ?? ZERO) as `0x${string}`;
   const usdtAddr = ADDRESSES[network].usdt as `0x${string}`;
   // Pin every read/write to the network the contracts are actually on, so the
   // dApp behaves correctly regardless of which chain MetaMask happens to be on.

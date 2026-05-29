@@ -2,19 +2,25 @@
 
 import { useAccount, useReadContract } from "wagmi";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
-import { ADDRESSES, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
+import { CHAIN_ID, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
+import { useActiveTournament } from "@/hooks/useActiveTournament";
 
-export function useLineup() {
+const ZERO = "0x0000000000000000000000000000000000000000" as const;
+
+export function useLineup(poolAddrParam?: `0x${string}`) {
   const { address } = useAccount();
-  const poolAddr = ADDRESSES[DEFAULT_NETWORK].pick5Pool as `0x${string}`;
+  const active = useActiveTournament(!poolAddrParam);
+  const poolAddr = (poolAddrParam ?? active.poolAddr ?? ZERO) as `0x${string}`;
+  const chainId = CHAIN_ID[DEFAULT_NETWORK];
 
   const r = useReadContract({
     abi: pick5PoolAbi,
     address: poolAddr,
+    chainId,
     functionName: "getLineup",
     args: address ? [address] : undefined,
     query: {
-      enabled: Boolean(address) && Boolean(poolAddr),
+      enabled: Boolean(address) && poolAddr !== ZERO,
       refetchInterval: 10_000,
     },
   });
