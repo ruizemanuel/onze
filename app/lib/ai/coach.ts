@@ -8,7 +8,7 @@ export const PicksSchema = z.object({
   picks: z
     .array(
       z.object({
-        playerId: z.number().int().min(1).max(999),
+        playerId: z.number().int().min(1).max(65535),
         playerName: z.string(),
         reasoning: z.string().min(20).max(300),
       }),
