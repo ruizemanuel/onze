@@ -9,7 +9,8 @@ import { LandingCTA } from "@/components/LandingCTA";
 import { Pitch, type PitchSlot } from "@/components/design/Pitch";
 import { Stat } from "@/components/design/Stat";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
-import { poolAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
+import { DEFAULT_NETWORK } from "@/lib/contracts/addresses";
+import { resolveActivePool } from "@/lib/contracts/factory";
 
 export const revalidate = 60; // refresh on-chain stats once per minute
 
@@ -20,14 +21,14 @@ function getChain(network: string) {
 }
 
 async function readPoolStats() {
-  const pool = poolAddress(DEFAULT_NETWORK);
-  if (pool === "0x0000000000000000000000000000000000000000") {
-    return { players: 0, poolUsd: 0, prizeUsd: 0 };
-  }
   const client = createPublicClient({ chain: getChain(DEFAULT_NETWORK), transport: http() });
   try {
+    const pool = await resolveActivePool(client, DEFAULT_NETWORK);
+    if (!pool) {
+      return { players: 0, poolUsd: 0, prizeUsd: 0 };
+    }
     const [deposit, seedAmount, participants] = await Promise.all([
-      client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "DEPOSIT" }) as Promise<bigint>,
+      client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "deposit" }) as Promise<bigint>,
       client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "seedAmount" }) as Promise<bigint>,
       client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "participantsLength" }) as Promise<bigint>,
     ]);
