@@ -10,6 +10,9 @@ export type FplPlayerElement = {
   selected_by_percent: string;
   form: string;
   total_points: number;
+  status: string;
+  chance_of_playing_this_round: number | null;
+  chance_of_playing_next_round: number | null;
 };
 
 export type FplTeam = {
