@@ -79,7 +79,11 @@ contract Pick5PoolFactory is Ownable {
         return pool;
     }
 
+    /// @dev Rotating the oracle affects ALL outstanding tournaments immediately
+    /// (each pool reads factory.oracle() at submit time). Zero is rejected so a
+    /// fat-fingered rotation can't silently disable score submission everywhere.
     function setOracle(address _oracle) external onlyOwner {
+        if (_oracle == address(0)) revert ZeroAddress();
         oracle = _oracle;
         emit OracleUpdated(_oracle);
     }
