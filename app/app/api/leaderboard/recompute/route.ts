@@ -4,8 +4,7 @@ import { celo, celoAlfajores, celoSepolia } from "viem/chains";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { leaderboardCache } from "@/lib/db/schema";
-import { getLive } from "@/lib/fpl/client";
-import { liveToMap } from "@/lib/fpl/scoring";
+import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
 import { poolAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 
@@ -67,10 +66,10 @@ export async function GET(req: NextRequest) {
   //     started purging it).
   const m37 = scoresSubmittedOnChain
     ? new Map<number, number>()
-    : liveToMap(await getLive(37).catch(() => ({ elements: [] })));
+    : await FplScoreProvider.getRoundPoints(37).catch(() => new Map<number, number>());
   const m38 = scoresSubmittedOnChain
     ? new Map<number, number>()
-    : liveToMap(await getLive(38).catch(() => ({ elements: [] })));
+    : await FplScoreProvider.getRoundPoints(38).catch(() => new Map<number, number>());
 
   type Lineup = readonly [bigint, bigint, bigint, bigint, bigint];
   const lineups: Record<string, Lineup> = {};

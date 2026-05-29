@@ -6,8 +6,8 @@ import crypto from "node:crypto";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { oracleRuns } from "@/lib/db/schema";
-import { getLive, isMwSettled } from "@/lib/fpl/client";
-import { aggregateUserScores, liveToMap } from "@/lib/fpl/scoring";
+import { aggregateUserScores } from "@/lib/fpl/scoring";
+import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
 import { DEFAULT_NETWORK, poolAddress } from "@/lib/contracts/addresses";
 import type { Network } from "@/lib/contracts/addresses";
@@ -118,8 +118,8 @@ export async function GET(req: NextRequest) {
   // Phase 1 — submitScores (only if not already done)
   // ────────────────────────────────────────────────────────────────────
   if (!scoresSubmittedOnChain) {
-    const settled37 = await isMwSettled(37).catch(() => false);
-    const settled38 = await isMwSettled(38).catch(() => false);
+    const settled37 = await FplScoreProvider.isRoundSettled(37).catch(() => false);
+    const settled38 = await FplScoreProvider.isRoundSettled(38).catch(() => false);
     if (!settled37 || !settled38) {
       await db.insert(oracleRuns).values({
         mw,
@@ -129,9 +129,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: false, reason: "not settled, will retry" });
     }
 
-    const [live37, live38] = await Promise.all([getLive(37), getLive(38)]);
-    const m37 = liveToMap(live37);
-    const m38 = liveToMap(live38);
+    const [m37, m38] = await Promise.all([
+      FplScoreProvider.getRoundPoints(37),
+      FplScoreProvider.getRoundPoints(38),
+    ]);
 
     const numParticipants = (await publicClient.readContract({
       address: poolAddr,

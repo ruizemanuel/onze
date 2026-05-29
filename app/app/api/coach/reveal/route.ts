@@ -5,7 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { coachPicks } from "@/lib/db/schema";
-import { getLive, isMwSettled } from "@/lib/fpl/client";
+import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
 import { coachAgentAbi } from "@/lib/contracts/abi";
 import { coachAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   const db = getDb();
 
-  const settled = await isMwSettled(mw).catch(() => false);
+  const settled = await FplScoreProvider.isRoundSettled(mw).catch(() => false);
   if (!settled) return NextResponse.json({ ok: false, reason: "not settled" });
 
   const rows = await db.select().from(coachPicks).where(eq(coachPicks.mw, mw));
@@ -44,23 +44,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, reason: "already revealed", txHash: row.revealTxHash });
   }
 
-  // Fetch actual MW points
-  const live = await getLive(mw);
-  const pointsByPlayer = new Map<number, number>();
-  for (const e of live.elements) {
-    pointsByPlayer.set(e.id, e.stats.total_points);
-  }
+  // Fetch actual MW points via the provider (playerId -> points).
+  const pointsByPlayer = await FplScoreProvider.getRoundPoints(mw);
 
-  // Compute accuracy: coachPickPoints / sum(top5 actual)
+  // Compute accuracy: coachPickPoints / sum(top5 actual points league-wide)
   const coachPickPoints = row.playerIds.reduce(
     (sum: number, pid: number) => sum + (pointsByPlayer.get(pid) ?? 0),
     0
   );
-  const sortedDesc = [...live.elements].sort(
-    (a, b) => b.stats.total_points - a.stats.total_points
-  );
-  const top5 = sortedDesc.slice(0, 5);
-  const top5Pts = top5.reduce((sum, e) => sum + e.stats.total_points, 0);
+  const top5Pts = [...pointsByPlayer.values()]
+    .sort((a, b) => b - a)
+    .slice(0, 5)
+    .reduce((sum, v) => sum + v, 0);
   const accuracy = Math.max(
     0,
     Math.min(100, Math.round((coachPickPoints / Math.max(top5Pts, 1)) * 100))
