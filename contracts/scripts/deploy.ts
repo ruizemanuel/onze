@@ -11,10 +11,14 @@ const ADDRESSES = {
   },
 };
 
+// 1 USDT (6 decimals). Per-tournament deposit, passed to createTournament.
+const DEPOSIT = 1_000_000n;
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
-  const isCelo = network.chainId === 42220n;
+  const isHardhat = network.chainId === 31337n;
+  const isCelo = network.chainId === 42220n || isHardhat; // hardhat forks Celo mainnet
   const isAlfa = network.chainId === 44787n;
   const isSepolia = network.chainId === 11142220n;
   const isTestnet = isAlfa || isSepolia;
@@ -25,10 +29,10 @@ async function main() {
   console.log("Network:", network.name, network.chainId.toString());
   console.log("Balance (CELO):", ethers.formatEther(await ethers.provider.getBalance(deployer.address)));
 
-  // Tournament times
-  // MW37 starts ~Sat 16/05/2026 14:00 UTC. End MW38 ~Sun 24/05/2026 19:00 UTC.
-  const lockTime = Math.floor(new Date("2026-05-16T14:00:00Z").getTime() / 1000);
-  const endTime  = Math.floor(new Date("2026-05-24T19:00:00Z").getTime() / 1000);
+  // First V2 tournament window — adjust per edition before deploying.
+  const lockTime = Math.floor(new Date("2026-08-15T11:30:00Z").getTime() / 1000);
+  const endTime  = Math.floor(new Date("2026-08-23T19:00:00Z").getTime() / 1000);
+  const label = process.env.TOURNAMENT_LABEL ?? "PL MW1-2";
 
   let usdt: string, aavePool: string, aUsdt: string;
 
@@ -66,16 +70,34 @@ async function main() {
 
   console.log("\nOracle:", oracleAddr);
   console.log("Coach:", coachAddr);
+  console.log("Label:", label);
   console.log("Lock time:", new Date(lockTime * 1000).toISOString());
   console.log("End time:", new Date(endTime * 1000).toISOString());
 
-  console.log("\nDeploying Pick5Pool...");
-  const Pool = await ethers.getContractFactory("Pick5Pool");
-  const pool = await Pool.deploy(oracleAddr, usdt, aavePool, aUsdt, lockTime, endTime);
-  await pool.waitForDeployment();
-  const poolAddr = await pool.getAddress();
-  console.log("Pick5Pool:", poolAddr);
+  // 1) Pool implementation (no constructor args; clone target)
+  console.log("\nDeploying Pick5Pool implementation...");
+  const Impl = await ethers.getContractFactory("Pick5Pool");
+  const impl = await Impl.deploy();
+  await impl.waitForDeployment();
+  const implAddr = await impl.getAddress();
+  console.log("Pick5Pool (impl):", implAddr);
 
+  // 2) Factory
+  console.log("\nDeploying Pick5PoolFactory...");
+  const Factory = await ethers.getContractFactory("Pick5PoolFactory");
+  const factory = await Factory.deploy(implAddr, usdt, aavePool, aUsdt, oracleAddr, coachAddr);
+  await factory.waitForDeployment();
+  const factoryAddr = await factory.getAddress();
+  console.log("Pick5PoolFactory:", factoryAddr);
+
+  // 3) First tournament
+  console.log("\nCreating first tournament...");
+  const tx = await factory.createTournament(lockTime, endTime, DEPOSIT, label);
+  await tx.wait();
+  const poolAddr = await factory.tournamentBy(0);
+  console.log("Tournament #0 pool:", poolAddr);
+
+  // 4) CoachAgent (per-competition; unchanged from V1)
   console.log("\nDeploying CoachAgent...");
   const Coach = await ethers.getContractFactory("CoachAgent");
   const coach = await Coach.deploy(coachAddr);
@@ -85,15 +107,17 @@ async function main() {
 
   console.log("\n=== Deployment summary ===");
   const suffix = isCelo ? "CELO" : testnetSuffix;
-  console.log(`NEXT_PUBLIC_PICK5_POOL_${suffix}=${poolAddr}`);
+  console.log(`NEXT_PUBLIC_PICK5_FACTORY_${suffix}=${factoryAddr}`);
   console.log(`NEXT_PUBLIC_COACH_AGENT_${suffix}=${coachAddrDeployed}`);
   if (isTestnet) {
     console.log(`NEXT_PUBLIC_USDT_${testnetSuffix}=${usdt}`);
   }
   const verifyNet = isCelo ? "celo" : isAlfa ? "alfajores" : "celo-sepolia";
-  console.log("\nNext steps:");
-  console.log(`  npx hardhat verify --network ${verifyNet} ${poolAddr} ${oracleAddr} ${usdt} ${aavePool} ${aUsdt} ${lockTime} ${endTime}`);
+  console.log("\nNext steps (verify):");
+  console.log(`  npx hardhat verify --network ${verifyNet} ${implAddr}`);
+  console.log(`  npx hardhat verify --network ${verifyNet} ${factoryAddr} ${implAddr} ${usdt} ${aavePool} ${aUsdt} ${oracleAddr} ${coachAddr}`);
   console.log(`  npx hardhat verify --network ${verifyNet} ${coachAddrDeployed} ${coachAddr}`);
+  console.log("\nNote: seed the tournament pool separately (owner calls seedPool on the clone).");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

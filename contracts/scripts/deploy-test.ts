@@ -1,11 +1,13 @@
 // Deploy a SHORT-LIFETIME instance for end-to-end dry-runs.
-// lockTime = now + 5 min, endTime = now + 12 min
+// lockTime = now + 10 min, endTime = now + 15 min
 // USE ONLY ON TESTNET. The production deploy.ts uses real tournament dates.
 
 import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
 
 dotenv.config();
+
+const DEPOSIT = 1_000_000n;
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -20,8 +22,8 @@ async function main() {
   console.log("Balance (CELO):", ethers.formatEther(await ethers.provider.getBalance(deployer.address)));
 
   const now = Math.floor(Date.now() / 1000);
-  const lockTime = now + 10 * 60;      // 10 min from now
-  const endTime  = now + 15 * 60;      // 5 min after lock
+  const lockTime = now + 10 * 60; // 10 min from now
+  const endTime  = now + 15 * 60; // 5 min after lock
 
   console.log("\nDeploying mocks...");
   const Mock = await ethers.getContractFactory("MockUSDT");
@@ -48,11 +50,22 @@ async function main() {
   console.log("Lock time:", new Date(lockTime * 1000).toISOString());
   console.log("End time: ", new Date(endTime * 1000).toISOString());
 
-  const Pool = await ethers.getContractFactory("Pick5Pool");
-  const pool = await Pool.deploy(oracleAddr, usdt, aavePool, aUsdt, lockTime, endTime);
-  await pool.waitForDeployment();
-  const poolAddr = await pool.getAddress();
-  console.log("Pick5Pool:", poolAddr);
+  const Impl = await ethers.getContractFactory("Pick5Pool");
+  const impl = await Impl.deploy();
+  await impl.waitForDeployment();
+  const implAddr = await impl.getAddress();
+  console.log("Pick5Pool (impl):", implAddr);
+
+  const Factory = await ethers.getContractFactory("Pick5PoolFactory");
+  const factory = await Factory.deploy(implAddr, usdt, aavePool, aUsdt, oracleAddr, coachAddr);
+  await factory.waitForDeployment();
+  const factoryAddr = await factory.getAddress();
+  console.log("Pick5PoolFactory:", factoryAddr);
+
+  const tx = await factory.createTournament(lockTime, endTime, DEPOSIT, "TEST DRY-RUN");
+  await tx.wait();
+  const poolAddr = await factory.tournamentBy(0);
+  console.log("Tournament #0 pool:", poolAddr);
 
   const Coach = await ethers.getContractFactory("CoachAgent");
   const coach = await Coach.deploy(coachAddr);
@@ -61,9 +74,10 @@ async function main() {
   console.log("CoachAgent:", coachAddrDeployed);
 
   console.log("\n=== TEST DEPLOY SUMMARY ===");
-  console.log(`NEXT_PUBLIC_PICK5_POOL_SEPOLIA=${poolAddr}`);
+  console.log(`NEXT_PUBLIC_PICK5_FACTORY_SEPOLIA=${factoryAddr}`);
   console.log(`NEXT_PUBLIC_COACH_AGENT_SEPOLIA=${coachAddrDeployed}`);
   console.log(`NEXT_PUBLIC_USDT_SEPOLIA=${usdt}`);
+  console.log(`# tournament #0 pool=${poolAddr}`);
   console.log(`# lockTime=${lockTime} (${new Date(lockTime * 1000).toISOString()})`);
   console.log(`# endTime=${endTime}  (${new Date(endTime * 1000).toISOString()})`);
 }
