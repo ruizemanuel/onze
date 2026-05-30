@@ -197,3 +197,52 @@ describe("Pick5Pool — pause (D.5)", () => {
       .to.emit(pool, "Joined");
   });
 });
+
+describe("Pick5PoolFactory — createSeason + registry", () => {
+  async function deployWithSeasonImpl() {
+    const f = await deployFactoryFixture();
+    const SeasonImpl = await ethers.getContractFactory("SeasonPool");
+    const seasonImpl = await SeasonImpl.deploy();
+    return { ...f, seasonImpl };
+  }
+
+  it("createSeason reverts until the season implementation is set", async () => {
+    const { factory, endTime } = await deployWithSeasonImpl();
+    await expect(factory.createSeason(endTime, "S0"))
+      .to.be.revertedWithCustomError(factory, "ZeroAddress");
+  });
+
+  it("setSeasonImplementation rejects zero and is owner-only", async () => {
+    const { factory, alice, seasonImpl } = await deployWithSeasonImpl();
+    await expect(factory.setSeasonImplementation(ethers.ZeroAddress))
+      .to.be.revertedWithCustomError(factory, "ZeroAddress");
+    await expect(factory.connect(alice).setSeasonImplementation(await seasonImpl.getAddress()))
+      .to.be.revertedWithCustomError(factory, "OwnableUnauthorizedAccount");
+  });
+
+  it("createSeason clones + initializes a SeasonPool, records it, emits the event", async () => {
+    const { factory, admin, oracle, seasonImpl, endTime } = await deployWithSeasonImpl();
+    await factory.setSeasonImplementation(await seasonImpl.getAddress());
+    await expect(factory.createSeason(endTime, "Premier League 2026/27"))
+      .to.emit(factory, "SeasonCreated");
+
+    expect(await factory.seasonsLength()).to.equal(1n);
+    const seasonAddr = await factory.seasonBy(0);
+    expect(seasonAddr).to.not.equal(ethers.ZeroAddress);
+
+    const season = await ethers.getContractAt("SeasonPool", seasonAddr);
+    expect(await season.label()).to.equal("Premier League 2026/27");
+    expect(await season.endTime()).to.equal(BigInt(endTime));
+    expect(await season.seasonId()).to.equal(0n);
+    expect(await season.factory()).to.equal(await factory.getAddress());
+    expect(await season.owner()).to.equal(admin.address);
+    expect(await season.oracle()).to.equal(oracle.address);
+  });
+
+  it("only the owner can create seasons", async () => {
+    const { factory, alice, seasonImpl, endTime } = await deployWithSeasonImpl();
+    await factory.setSeasonImplementation(await seasonImpl.getAddress());
+    await expect(factory.connect(alice).createSeason(endTime, "X"))
+      .to.be.revertedWithCustomError(factory, "OwnableUnauthorizedAccount");
+  });
+});

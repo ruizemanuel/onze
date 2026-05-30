@@ -5,6 +5,7 @@ import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Pick5Pool, IAavePool } from "./Pick5Pool.sol";
+import { SeasonPool } from "./SeasonPool.sol";
 
 contract Pick5PoolFactory is Ownable {
     address public immutable poolImplementation;
@@ -18,6 +19,10 @@ contract Pick5PoolFactory is Ownable {
     address[] public tournaments;
     mapping(uint256 => address) public tournamentBy;
 
+    address public seasonImplementation;   // set once after deploy (clone target)
+    address[] public seasons;
+    mapping(uint256 => address) public seasonBy;
+
     event TournamentCreated(
         uint256 indexed id,
         address pool,
@@ -28,6 +33,8 @@ contract Pick5PoolFactory is Ownable {
     );
     event OracleUpdated(address oracle);
     event CoachUpdated(address coach);
+    event SeasonImplementationUpdated(address impl);
+    event SeasonCreated(uint256 indexed id, address pool, uint256 endTime, string label);
 
     error ZeroAddress();
 
@@ -91,6 +98,43 @@ contract Pick5PoolFactory is Ownable {
     function setCoach(address _coach) external onlyOwner {
         coach = _coach;
         emit CoachUpdated(_coach);
+    }
+
+    /// @dev Additive: the season implementation is set after deploy rather than in
+    /// the ctor, so the existing factory ctor + tests are untouched. Owner-only;
+    /// only affects FUTURE createSeason calls (existing season clones are
+    /// immutable once cloned). Zero is rejected.
+    function setSeasonImplementation(address _impl) external onlyOwner {
+        if (_impl == address(0)) revert ZeroAddress();
+        seasonImplementation = _impl;
+        emit SeasonImplementationUpdated(_impl);
+    }
+
+    function createSeason(
+        uint256 endTime,
+        string calldata label
+    ) external onlyOwner returns (address) {
+        if (seasonImplementation == address(0)) revert ZeroAddress();
+        uint256 id = seasons.length;
+        address pool = Clones.clone(seasonImplementation);
+        SeasonPool(pool).initialize(
+            address(this),
+            owner(),
+            usdt,
+            aavePool,
+            aUsdt,
+            endTime,
+            id,
+            label
+        );
+        seasons.push(pool);
+        seasonBy[id] = pool;
+        emit SeasonCreated(id, pool, endTime, label);
+        return pool;
+    }
+
+    function seasonsLength() external view returns (uint256) {
+        return seasons.length;
     }
 
     function tournamentsLength() external view returns (uint256) {
