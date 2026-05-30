@@ -37,7 +37,7 @@ export async function GET() {
   }
 
   const reads = await Promise.all([
-    client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "DEPOSIT" }) as Promise<bigint>,
+    client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "deposit" }) as Promise<bigint>,
     client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "seedAmount" }) as Promise<bigint>,
     client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "participantsLength" }) as Promise<bigint>,
     client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "lockTime" }) as Promise<bigint>,
@@ -93,7 +93,7 @@ export async function GET() {
     pool: {
       address: pool,
       phase,
-      DEPOSIT: deposit.toString(),
+      deposit: deposit.toString(),
       seedAmount: seedAmount.toString(),
       participantsLength: Number(participants),
       lockTime: lockTimeNum,
