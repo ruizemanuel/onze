@@ -8,6 +8,7 @@ import { coachPicks } from "@/lib/db/schema";
 import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
 import { coachAgentAbi } from "@/lib/contracts/abi";
 import { coachAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
+import { isConfiguredRound } from "@/lib/tournaments/seasons";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -26,8 +27,8 @@ export async function GET(req: NextRequest) {
   }
 
   const mw = Number(req.nextUrl.searchParams.get("mw"));
-  if (![37, 38].includes(mw)) {
-    return NextResponse.json({ ok: false, reason: "invalid mw" }, { status: 400 });
+  if (!Number.isInteger(mw) || !isConfiguredRound(mw)) {
+    return NextResponse.json({ ok: false, reason: "invalid mw (not a configured season round)" }, { status: 400 });
   }
 
   const db = getDb();

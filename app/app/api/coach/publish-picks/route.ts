@@ -16,6 +16,7 @@ import { generateCoachPicks } from "@/lib/ai/coach";
 import { fallbackPicks } from "@/lib/ai/fallback";
 import { coachAgentAbi } from "@/lib/contracts/abi";
 import { coachAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
+import { isConfiguredRound } from "@/lib/tournaments/seasons";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -35,8 +36,8 @@ export async function GET(req: NextRequest) {
 
   const mwStr = req.nextUrl.searchParams.get("mw");
   const mw = Number(mwStr);
-  if (![37, 38].includes(mw)) {
-    return NextResponse.json({ ok: false, reason: "invalid mw, expected 37 or 38" }, { status: 400 });
+  if (!Number.isInteger(mw) || !isConfiguredRound(mw)) {
+    return NextResponse.json({ ok: false, reason: `mw ${mwStr} is not a configured season round` }, { status: 400 });
   }
 
   const db = getDb();
