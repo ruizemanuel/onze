@@ -56,6 +56,20 @@ export function seasonFechaIds(season: Season): number[] {
   return season.fechas.map((f) => f.tournamentId);
 }
 
+/**
+ * The 1-based position of a fecha within its season (the user-facing "Fecha N"),
+ * or undefined if the tournamentId isn't configured. This is the single source
+ * for the fecha number — derive it from the config, never from the raw
+ * tournamentId, which need not be 0-based or contiguous on-chain.
+ */
+export function fechaNumber(tournamentId: number): number | undefined {
+  for (const s of SEASONS) {
+    const idx = s.fechas.findIndex((f) => f.tournamentId === tournamentId);
+    if (idx >= 0) return idx + 1;
+  }
+  return undefined;
+}
+
 /** Is `round` an FPL round configured in any season? (coach mw validation) */
 export function isConfiguredRound(round: number): boolean {
   return SEASONS.some((s) => s.fechas.some((f) => f.round === round));

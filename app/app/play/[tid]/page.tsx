@@ -14,7 +14,7 @@ import { Stat } from "@/components/design/Stat";
 import { useFechaPool } from "@/hooks/useFechaPool";
 import { useLineup } from "@/hooks/useLineup";
 import { usePool } from "@/hooks/usePool";
-import { fechaRound } from "@/lib/tournaments/seasons";
+import { fechaNumber, fechaRound } from "@/lib/tournaments/seasons";
 import type { FplPlayerSummary } from "@/lib/fpl/types";
 
 type LiveStats = {
@@ -156,8 +156,9 @@ export default function MyTeamPage() {
   const lockParts = lockMs
     ? partsBetween(new Date(lockMs), now)
     : { expired: false, days: 0, hours: 0, mins: 0 };
+  const fechaNo = fechaNumber(tid) ?? tid + 1;
   const fechaLabel =
-    round !== undefined ? `Fecha ${tid + 1} · GW${round}` : `Fecha ${tid + 1}`;
+    round !== undefined ? `Fecha ${fechaNo} · GW${round}` : `Fecha ${fechaNo}`;
   const statusLabel = finalized ? "FINAL" : isLocked ? "LIVE" : "LOCKS IN";
   const statusValue = finalized
     ? "Settled"

@@ -8,7 +8,7 @@ import { FechaCard } from "@/components/FechaCard";
 import { pick5PoolAbi, pick5SeasonAbi } from "@/lib/contracts/abi";
 import { DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 import { resolvePoolById, resolveSeasonPool } from "@/lib/contracts/factory";
-import { getActiveSeason } from "@/lib/tournaments/seasons";
+import { fechaNumber, getActiveSeason } from "@/lib/tournaments/seasons";
 import { fechaStatus, type FechaStatus } from "@/lib/tournaments/fechaStatus";
 
 export const revalidate = 60;
@@ -42,7 +42,7 @@ async function load() {
       const f = season.fechas[i];
       const pool = await resolvePoolById(client, network, f.tournamentId);
       if (!pool) {
-        rows.push({ tournamentId: f.tournamentId, fechaNumber: i + 1, round: f.round, status: "soon", sub: "Opens once created on-chain" });
+        rows.push({ tournamentId: f.tournamentId, fechaNumber: fechaNumber(f.tournamentId) ?? i + 1, round: f.round, status: "soon", sub: "Opens once created on-chain" });
         continue;
       }
       const [lockTime, deposit, participants, finalized, winner, seed, scoresSubmitted] = await Promise.all([
@@ -59,7 +59,7 @@ async function load() {
       if (status === "joining") sub = `Open · ${usd(deposit)} entry · ${Number(participants)} in`;
       else if (status === "scoring") sub = `${scoresSubmitted ? "Scores in" : "Live"} · ${Number(participants)} players`;
       else sub = winner && winner !== "0x0000000000000000000000000000000000000000" ? `Winner ${trunc(winner)} · prize ${usd(seed)}` : "Settled";
-      rows.push({ tournamentId: f.tournamentId, fechaNumber: i + 1, round: f.round, status, sub });
+      rows.push({ tournamentId: f.tournamentId, fechaNumber: fechaNumber(f.tournamentId) ?? i + 1, round: f.round, status, sub });
     }
   } catch {
     // fall through with whatever rows we have
