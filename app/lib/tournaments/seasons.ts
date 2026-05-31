@@ -6,12 +6,14 @@
 
 export type Fecha = {
   tournamentId: number; // factory.tournamentBy(tournamentId)
-  round: number;        // FPL gameweek this fecha scores
+  round: number;        // primary provider round (back-compat; first of `rounds`)
+  rounds?: number[];    // a phase may aggregate several provider rounds (WC group = [1,2,3])
 };
 
 export type Season = {
   seasonId: number;     // factory.seasonBy(seasonId) -> SeasonPool
   label: string;
+  provider?: string;    // ScoreProvider id; defaults to "fpl"
   fechas: Fecha[];
 };
 
@@ -73,4 +75,16 @@ export function fechaNumber(tournamentId: number): number | undefined {
 /** Is `round` an FPL round configured in any season? (coach mw validation) */
 export function isConfiguredRound(round: number): boolean {
   return SEASONS.some((s) => s.fechas.some((f) => f.round === round));
+}
+
+/** The provider rounds a fecha/phase aggregates (rounds[] if set, else [round]). */
+export function phaseRounds(season: Season, tournamentId: number): number[] {
+  const f = season.fechas.find((x) => x.tournamentId === tournamentId);
+  if (!f) return [];
+  return f.rounds ?? [f.round];
+}
+
+/** A season's ScoreProvider id (defaults to "fpl"). */
+export function seasonProvider(season: Season): string {
+  return season.provider ?? "fpl";
 }
