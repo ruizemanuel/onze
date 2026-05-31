@@ -4,8 +4,25 @@ pragma solidity 0.8.24;
 import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Pick5Pool, IAavePool } from "./Pick5Pool.sol";
+import { IAavePool } from "./Pick5Pool.sol";
 import { SeasonPool } from "./SeasonPool.sol";
+
+/// @dev Any pool implementation the factory can clone (Pick5Pool or OnzePool) — they share
+/// this initializer signature, so the factory is pool-agnostic.
+interface IPoolInitializer {
+    function initialize(
+        address _factory,
+        address _owner,
+        IERC20 _usdt,
+        IAavePool _aavePool,
+        IERC20 _aUsdt,
+        uint256 _lockTime,
+        uint256 _endTime,
+        uint256 _deposit,
+        uint256 _tournamentId,
+        string calldata _label
+    ) external;
+}
 
 contract Pick5PoolFactory is Ownable {
     address public immutable poolImplementation;
@@ -68,7 +85,7 @@ contract Pick5PoolFactory is Ownable {
     ) external onlyOwner returns (address) {
         uint256 id = tournaments.length;
         address pool = Clones.clone(poolImplementation);
-        Pick5Pool(pool).initialize(
+        IPoolInitializer(pool).initialize(
             address(this),
             owner(),
             IERC20(usdt),
