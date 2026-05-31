@@ -19,5 +19,5 @@ export function LandingCTA() {
   if (pool.isLocked) {
     return <PrimaryCTALink href="/leaderboard" label="See Standings" />;
   }
-  return <PrimaryCTALink href="/play/build" label="Start Playing" />;
+  return <PrimaryCTALink href="/play" label="Start Playing" />;
 }

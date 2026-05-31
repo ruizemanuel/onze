@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { parseUnits } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -12,6 +12,7 @@ import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
 import { PlayerRow } from "@/components/design/PlayerRow";
 import { PrimaryCTA } from "@/components/design/PrimaryCTA";
 import { useLineupDraft } from "@/stores/lineupDraft";
+import { useFechaPool } from "@/hooks/useFechaPool";
 import { usePool } from "@/hooks/usePool";
 import { posthog } from "@/lib/posthog";
 import type { FplPlayerSummary } from "@/lib/fpl/types";
@@ -53,25 +54,29 @@ async function celebrate() {
 
 export default function ConfirmPage() {
   const router = useRouter();
+  const params = useParams<{ tid: string }>();
+  const tid = Number(params.tid);
+  const { poolAddr } = useFechaPool(tid);
   const { isConnected } = useAccount();
   const { switchChain, isPending: switchPending } = useSwitchChain();
-  const { lineup, clear } = useLineupDraft();
-  const pool = usePool();
+  const { lineupFor, clear } = useLineupDraft();
+  const lineup = lineupFor(tid);
+  const pool = usePool(poolAddr);
   const [step, setStep] = useState<"approve" | "join">("approve");
   const [busy, setBusy] = useState(false);
   const [didJoin, setDidJoin] = useState(false);
   const [players, setPlayers] = useState<FplPlayerSummary[]>([]);
 
   useEffect(() => {
-    // Once the join tx confirms we navigate to /play and clear the draft
-    // explicitly. Don't bounce back to /play/build during that transition.
+    // Once the join tx confirms we navigate to /play/[tid] and clear the draft
+    // explicitly. Don't bounce back to the build step during that transition.
     if (didJoin) return;
     if (lineup.some((x) => x === null)) {
-      router.replace("/play/build" as Route);
+      router.replace(`/play/${tid}/build` as Route);
       return;
     }
     if (pool.allowance >= parseUnits("1", 6)) setStep("join");
-  }, [lineup, pool.allowance, router, didJoin]);
+  }, [lineup, pool.allowance, router, didJoin, tid]);
 
   useEffect(() => {
     fetch("/api/fpl/players")
@@ -136,9 +141,9 @@ export default function ConfirmPage() {
       setDidJoin(true);
       posthog.capture("deposit_completed", { amount_usdt: 1 });
       toast.success("You're in 🎉");
-      router.push("/play" as Route);
+      router.push(`/play/${tid}` as Route);
       void celebrate();
-      clear();
+      clear(tid);
     } catch (e) {
       console.error(e);
       toast.error("Join failed");
@@ -164,7 +169,7 @@ export default function ConfirmPage() {
             Confirm Lineup
           </h1>
           <p className="mt-2 text-sm text-white/50">
-            Review your 5 picks. Submit to lock them in for matchweeks 37 & 38.
+            Review your 5 picks. Submit to lock them in for this fecha.
           </p>
         </section>
 
@@ -196,7 +201,7 @@ export default function ConfirmPage() {
               </span>
             </div>
             <p className="mt-1 text-[11px] text-white/40">
-              Refundable in full after MW38, regardless of outcome.
+              Refundable in full after this fecha settles, regardless of outcome.
             </p>
           </div>
         </section>
@@ -204,9 +209,9 @@ export default function ConfirmPage() {
         <section className="pt-5">
           {pool.hasJoined ? (
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70">
-              You already joined this tournament.
+              You already joined this fecha.
               <Link
-                href={"/play" as Route}
+                href={`/play/${tid}` as Route}
                 className="ml-1 text-[#00DF7C] underline-offset-4 hover:underline"
               >
                 Go to your team →
@@ -214,7 +219,7 @@ export default function ConfirmPage() {
             </div>
           ) : pool.isLocked ? (
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70">
-              Entries closed — the tournament locked on 16 May. New lineups can
+              Entries closed — this fecha has locked. New lineups can
               no longer be submitted.
               <Link
                 href={"/leaderboard" as Route}

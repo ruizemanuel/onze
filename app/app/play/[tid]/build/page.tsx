@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { BottomNav } from "@/components/BottomNav";
 import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
 import { Pitch, type PitchSlot } from "@/components/design/Pitch";
@@ -11,13 +11,18 @@ import { PrimaryCTA } from "@/components/design/PrimaryCTA";
 import { SecondaryCTA } from "@/components/design/SecondaryCTA";
 import { PlayerPicker } from "@/components/pitch/PlayerPicker";
 import { useLineupDraft } from "@/stores/lineupDraft";
+import { useFechaPool } from "@/hooks/useFechaPool";
 import { usePool } from "@/hooks/usePool";
 import type { FplPlayerSummary } from "@/lib/fpl/types";
 
 export default function BuildPage() {
   const router = useRouter();
-  const { lineup, setSlot, randomFill } = useLineupDraft();
-  const pool = usePool();
+  const params = useParams<{ tid: string }>();
+  const tid = Number(params.tid);
+  const { poolAddr } = useFechaPool(tid);
+  const pool = usePool(poolAddr);
+  const { lineupFor, setSlot, randomFill } = useLineupDraft();
+  const lineup = lineupFor(tid);
   const [players, setPlayers] = useState<FplPlayerSummary[]>([]);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
@@ -83,17 +88,17 @@ export default function BuildPage() {
               Entries closed
             </div>
             <h1 className="font-display mt-1 text-4xl leading-none tracking-tight">
-              Tournament locked
+              Fecha locked
             </h1>
             <p className="mt-2 text-sm text-white/50">
-              Picks locked on 16 May · 14:00 UTC. New lineups are closed for
-              matchweeks 37 &amp; 38.
+              Entries for this fecha are closed. New lineups can no longer be
+              submitted.
             </p>
           </section>
 
           <section className="pt-6">
             <Link
-              href={(pool.hasJoined ? "/play" : "/leaderboard") as Route}
+              href={(pool.hasJoined ? `/play/${tid}` : "/leaderboard") as Route}
               className="block rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70 transition hover:bg-white/10"
             >
               {pool.hasJoined ? "See your team →" : "See the live standings →"}
@@ -134,13 +139,13 @@ export default function BuildPage() {
         <section className="pt-5 space-y-3">
           <SecondaryCTA
             label="Random fill"
-            onClick={() => randomFill(allIds)}
+            onClick={() => randomFill(tid, allIds)}
             disabled={!allIds.length}
           />
           <PrimaryCTA
             label={filled === 5 ? "Continue · 5 / 5" : `Continue · ${filled} / 5`}
             disabled={filled < 5}
-            onClick={() => router.push("/play/confirm")}
+            onClick={() => router.push(`/play/${tid}/confirm` as Route)}
           />
         </section>
       </div>
@@ -153,13 +158,13 @@ export default function BuildPage() {
         excludeIds={pickerExclude}
         players={players}
         onPick={(id) => {
-          if (pickerSlot !== null) setSlot(pickerSlot, id);
+          if (pickerSlot !== null) setSlot(tid, pickerSlot, id);
           setPickerSlot(null);
         }}
         onClear={
           pickerSlot !== null && lineup[pickerSlot] !== null
             ? () => {
-                setSlot(pickerSlot, null);
+                setSlot(tid, pickerSlot, null);
                 setPickerSlot(null);
               }
             : undefined

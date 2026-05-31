@@ -9,14 +9,14 @@ import { usePool } from "@/hooks/usePool";
  * The desktop landing's torn-ticket CTA. Mirrors the routing logic of the
  * mobile <LandingCTA>: a connected wallet that already joined resumes at
  * /play; a finalized tournament points at /results; everyone else enters
- * the join funnel at /play/build. Styling comes from the `.lp-` classes in
- * the landing page's inline <style> block.
+ * the join funnel at /play (which redirects to the active fecha). Styling
+ * comes from the `.lp-` classes in the landing page's inline <style> block.
  */
 export function DesktopTicketCTA() {
   const { isConnected } = useAccount();
   const pool = usePool();
 
-  let href: Route = "/play/build" as Route;
+  let href: Route = "/play" as Route;
   let label = "KICK OFF";
   if (pool.isFinalized) {
     href = "/results" as Route;

@@ -50,6 +50,22 @@ export function usePool(poolAddrParam?: `0x${string}`) {
     query: { enabled: Boolean(poolAddr) },
   });
 
+  const endTime = useReadContract({
+    abi: pick5PoolAbi,
+    address: poolAddr,
+    chainId,
+    functionName: "endTime",
+    query: { enabled: Boolean(poolAddr) },
+  });
+
+  const scoresSubmitted = useReadContract({
+    abi: pick5PoolAbi,
+    address: poolAddr,
+    chainId,
+    functionName: "scoresSubmitted",
+    query: { enabled: Boolean(poolAddr) },
+  });
+
   const winner = useReadContract({
     abi: pick5PoolAbi,
     address: poolAddr,
@@ -144,6 +160,9 @@ export function usePool(poolAddrParam?: `0x${string}`) {
     allowance: (allowance.data as bigint | undefined) ?? BigInt(0),
     hasJoined: Boolean(hasJoined.data),
     isLocked,
+    lockTime: lockTime.data as bigint | undefined,
+    endTime: endTime.data as bigint | undefined,
+    scoresSubmitted: Boolean(scoresSubmitted.data),
     winner: winnerAddr,
     isWinner,
     isFinalized: Boolean(finalized.data),
