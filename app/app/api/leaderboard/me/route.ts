@@ -12,10 +12,14 @@ export async function GET(req: NextRequest) {
   if (!wallet || !/^0x[0-9a-f]{40}$/.test(wallet)) {
     return NextResponse.json({ error: "invalid wallet" }, { status: 400 });
   }
+  // Optional ?t=<tournamentId> scopes points + rank to a single fecha; absent, it
+  // aggregates the whole active season (the Tabla General). Same query, different ids.
+  const tParam = req.nextUrl.searchParams.get("t");
+  const t = tParam !== null && /^\d+$/.test(tParam) ? Number(tParam) : undefined;
 
   try {
     const db = getDb();
-    const ids = seasonFechaIds(getActiveSeason());
+    const ids = t !== undefined ? [t] : seasonFechaIds(getActiveSeason());
     const rows = await db
       .select({
         wallet: leaderboardCache.wallet,
