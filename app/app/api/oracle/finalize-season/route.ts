@@ -5,7 +5,6 @@ import { privateKeyToAccount } from "viem/accounts";
 import crypto from "node:crypto";
 import { pick5PoolAbi, pick5SeasonAbi } from "@/lib/contracts/abi";
 import { DEFAULT_NETWORK } from "@/lib/contracts/addresses";
-import type { Network } from "@/lib/contracts/addresses";
 import { resolvePoolById, resolveSeasonPool } from "@/lib/contracts/factory";
 import { getSeasonById } from "@/lib/tournaments/seasons";
 import { sumSeasonScores } from "@/lib/scoring/season";

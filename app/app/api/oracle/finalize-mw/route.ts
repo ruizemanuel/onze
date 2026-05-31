@@ -10,7 +10,6 @@ import { aggregateUserScores } from "@/lib/fpl/scoring";
 import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
 import { DEFAULT_NETWORK } from "@/lib/contracts/addresses";
-import type { Network } from "@/lib/contracts/addresses";
 import { resolvePoolById } from "@/lib/contracts/factory";
 import { fechaRound } from "@/lib/tournaments/seasons";
 
