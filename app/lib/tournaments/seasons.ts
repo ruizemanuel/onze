@@ -8,6 +8,8 @@ export type Fecha = {
   tournamentId: number; // factory.tournamentBy(tournamentId)
   round: number;        // primary provider round (back-compat; first of `rounds`)
   rounds?: number[];    // a phase may aggregate several provider rounds (WC group = [1,2,3])
+  label?: string;       // human phase label, e.g. "Fase de grupos" (defaults to `GW{round}`)
+  budget?: number;      // squad budget cap in millions for this phase (defaults to 100)
 };
 
 export type Season = {
@@ -26,6 +28,22 @@ export const SEASONS: Season[] = [
     fechas: [
       { tournamentId: 0, round: 39 },
       { tournamentId: 1, round: 40 },
+    ],
+  },
+  {
+    seasonId: 1, // PLACEHOLDER — Tanda 5 sets the real SeasonPool id at deploy.
+    label: "Copa del Mundo 2026",
+    provider: "fifa-wc",
+    // tournamentId values are PLACEHOLDERS. Tanda 5 deploys the Onze factory + pools
+    // and replaces these with the real on-chain ids. Until then `useFechaPool` resolves
+    // them to a zero address and the builder gates the join ("aún no abierto").
+    fechas: [
+      { tournamentId: 100, round: 1, rounds: [1, 2, 3], label: "Fase de grupos", budget: 100 },
+      { tournamentId: 101, round: 4, rounds: [4], label: "16avos", budget: 105 },
+      { tournamentId: 102, round: 5, rounds: [5], label: "Octavos", budget: 105 },
+      { tournamentId: 103, round: 6, rounds: [6], label: "Cuartos", budget: 105 },
+      { tournamentId: 104, round: 7, rounds: [7], label: "Semis", budget: 105 },
+      { tournamentId: 105, round: 8, rounds: [8], label: "Final", budget: 105 },
     ],
   },
 ];
@@ -87,4 +105,22 @@ export function phaseRounds(season: Season, tournamentId: number): number[] {
 /** A season's ScoreProvider id (defaults to "fpl"). */
 export function seasonProvider(season: Season): string {
   return season.provider ?? "fpl";
+}
+
+/** The squad budget (in millions) for a fecha/phase. Defaults to 100. */
+export function fechaBudget(tournamentId: number): number {
+  for (const s of SEASONS) {
+    const f = s.fechas.find((x) => x.tournamentId === tournamentId);
+    if (f) return f.budget ?? 100;
+  }
+  return 100;
+}
+
+/** The human label for a fecha/phase, falling back to `GW{round}`. */
+export function fechaLabel(tournamentId: number): string {
+  for (const s of SEASONS) {
+    const f = s.fechas.find((x) => x.tournamentId === tournamentId);
+    if (f) return f.label ?? `GW${f.round}`;
+  }
+  return `#${tournamentId}`;
 }
