@@ -20,6 +20,7 @@ contracts/coverage.json
 # tooling caches
 .playwright-mcp/
 .claude/
+.superpowers/
 
 # hardhat
 contracts/cache/
