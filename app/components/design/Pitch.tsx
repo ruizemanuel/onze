@@ -3,24 +3,27 @@
 import type { ReactNode } from "react";
 import { PitchSVG } from "./PitchSVG";
 import { PlayerSlot, type PlayerSlotProps } from "./PlayerSlot";
+import type { PitchPosition } from "@/lib/lineup/formations";
 
 export type PitchSlot = (PlayerSlotProps & { empty?: false }) | { empty: true };
 
-const PENTAGON_POSITIONS = [
+const PENTAGON_POSITIONS: PitchPosition[] = [
   { top: "17%", left: "50%" },
   { top: "39%", left: "22%" },
   { top: "39%", left: "78%" },
   { top: "67%", left: "32%" },
   { top: "67%", left: "68%" },
-] as const;
+];
 
 export type PitchProps = {
   slots: PitchSlot[];
+  positions?: PitchPosition[];     // defaults to the 5-slot pentagon
+  captainIndex?: number | null;    // slot index to badge as captain
   onSlotClick?: (index: number) => void;
   emptyLabel?: string;
 };
 
-export function Pitch({ slots, onSlotClick, emptyLabel = "Pick" }: PitchProps) {
+export function Pitch({ slots, positions = PENTAGON_POSITIONS, captainIndex = null, onSlotClick, emptyLabel = "Pick" }: PitchProps) {
   return (
     <div
       className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl"
@@ -42,13 +45,13 @@ export function Pitch({ slots, onSlotClick, emptyLabel = "Pick" }: PitchProps) {
         aria-hidden
       />
 
-      {PENTAGON_POSITIONS.map((p, i) => {
+      {positions.map((p, i) => {
         const slot = slots[i];
         const interactive = !!onSlotClick;
         const content: ReactNode = !slot || slot.empty ? (
           <EmptyPitchSlot label={emptyLabel} />
         ) : (
-          <PlayerSlot {...slot} size={slot.size ?? "lg"} />
+          <PlayerSlot {...slot} size={slot.size ?? "lg"} captain={i === captainIndex} />
         );
         const wrapperCls =
           "absolute -translate-x-1/2 -translate-y-1/2" +

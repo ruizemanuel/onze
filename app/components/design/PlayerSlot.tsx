@@ -14,6 +14,7 @@ export type PlayerSlotProps = {
   position?: string;
   size?: PlayerSlotSize;
   showLabel?: boolean;
+  captain?: boolean;
 };
 
 const SIZE_PX: Record<PlayerSlotSize, number> = {
@@ -31,6 +32,7 @@ export function PlayerSlot({
   position,
   size = "lg",
   showLabel = true,
+  captain = false,
 }: PlayerSlotProps) {
   const px = SIZE_PX[size];
   const labelInitialsCls =
@@ -70,6 +72,14 @@ export function PlayerSlot({
             ) : null}
           </div>
         </div>
+        {captain && (
+          <span
+            className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-[#F5C842] text-[10px] font-bold text-black"
+            aria-label="Capitán"
+          >
+            C
+          </span>
+        )}
       </div>
       {showLabel && (name || team || position) && (
         <div className="flex flex-col items-center gap-0.5 text-center">
