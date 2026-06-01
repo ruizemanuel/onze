@@ -11,7 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { coachPicks } from "@/lib/db/schema";
-import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
+import { getActiveProvider } from "@/lib/scoring/providers";
 import { generateCoachPicks } from "@/lib/ai/coach";
 import { fallbackPicks } from "@/lib/ai/fallback";
 import { onzeCoachAgentAbi } from "@/lib/contracts/abi";
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const players = await FplScoreProvider.getPlayers();
+  const players = await getActiveProvider().getPlayers();
 
   let picks;
   try {

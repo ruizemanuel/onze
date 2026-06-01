@@ -5,7 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { coachPicks } from "@/lib/db/schema";
-import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
+import { getActiveProvider } from "@/lib/scoring/providers";
 import { onzeCoachAgentAbi } from "@/lib/contracts/abi";
 import { coachAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 import { isConfiguredRound } from "@/lib/tournaments/seasons";
@@ -26,8 +26,9 @@ export async function GET(req: NextRequest) {
   }
 
   const db = getDb();
+  const provider = getActiveProvider();
 
-  const settled = await FplScoreProvider.isRoundSettled(mw).catch(() => false);
+  const settled = await provider.isRoundSettled(mw).catch(() => false);
   if (!settled) return NextResponse.json({ ok: false, reason: "not settled" });
 
   const rows = await db.select().from(coachPicks).where(eq(coachPicks.mw, mw));
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Fetch actual MW points via the provider (playerId -> points).
-  const pointsByPlayer = await FplScoreProvider.getRoundPoints(mw);
+  const pointsByPlayer = await provider.getRoundPoints(mw);
 
   // Compute accuracy: coachPickPoints / sum(top-11 actual points league-wide)
   const coachPickPoints = row.playerIds.reduce(
