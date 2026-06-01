@@ -14,7 +14,8 @@ import { coachPicks } from "@/lib/db/schema";
 import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
 import { generateCoachPicks } from "@/lib/ai/coach";
 import { fallbackPicks } from "@/lib/ai/fallback";
-import { coachAgentAbi } from "@/lib/contracts/abi";
+import { onzeCoachAgentAbi } from "@/lib/contracts/abi";
+import { PICKS_COUNT } from "@/lib/ai/coach";
 import { coachAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 import { isConfiguredRound } from "@/lib/tournaments/seasons";
 
@@ -56,13 +57,18 @@ export async function GET(req: NextRequest) {
     picks = fallbackPicks(players);
   }
 
-  const playerIds = picks.picks.map((p) => p.playerId) as [number, number, number, number, number];
+  const playerIds = picks.picks.map((p) => p.playerId);
   const reasoning = picks.picks.map((p) => p.reasoning);
 
+  if (playerIds.length !== PICKS_COUNT) {
+    return NextResponse.json({ ok: false, reason: `expected ${PICKS_COUNT} picks, got ${playerIds.length}` }, { status: 500 });
+  }
+
   // commitment hash matches what the Solidity contract checks: keccak256(abi.encode(picks))
-  // where picks is uint16[5]
+  // where picks is uint16[11]
+  type Uint16x11 = readonly [number, number, number, number, number, number, number, number, number, number, number];
   const commitmentHash = keccak256(
-    encodeAbiParameters(parseAbiParameters("uint16[5]"), [playerIds])
+    encodeAbiParameters(parseAbiParameters("uint16[11]"), [playerIds as unknown as Uint16x11])
   );
 
   const [inserted] = await db
@@ -93,7 +99,7 @@ export async function GET(req: NextRequest) {
   try {
     const txHash = await walletClient.writeContract({
       address: coachAddr,
-      abi: coachAgentAbi,
+      abi: onzeCoachAgentAbi,
       functionName: "publishCommitment",
       args: [mw, commitmentHash],
     });

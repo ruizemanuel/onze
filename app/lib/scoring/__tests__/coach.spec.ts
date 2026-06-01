@@ -47,17 +47,15 @@ describe("rankCandidates", () => {
 });
 
 describe("fallbackPicks", () => {
-  it("never returns an unavailable player", () => {
+  it("never returns an unavailable player and returns a full XI", () => {
     const pool = [
-      player({ id: 1, status: "i", form: 9, owned: 60, cost: 5 }),
-      player({ id: 2, status: "a", form: 7, owned: 40, cost: 6 }),
-      player({ id: 3, status: "a", form: 6, owned: 35, cost: 6 }),
-      player({ id: 4, status: "a", form: 5, owned: 30, cost: 6 }),
-      player({ id: 5, status: "a", form: 4, owned: 25, cost: 6 }),
-      player({ id: 6, status: "a", form: 3, owned: 20, cost: 6 }),
+      player({ id: 1, status: "i", form: 9, owned: 60, cost: 5 }), // injured -> excluded
+      ...Array.from({ length: 12 }, (_, i) =>
+        player({ id: i + 2, status: "a", form: 12 - i, owned: 40 - i, cost: 6 }),
+      ),
     ];
     const ids = fallbackPicks(pool).picks.map((p) => p.playerId);
     expect(ids).not.toContain(1);
-    expect(ids).toHaveLength(5);
+    expect(ids).toHaveLength(11);
   });
 });

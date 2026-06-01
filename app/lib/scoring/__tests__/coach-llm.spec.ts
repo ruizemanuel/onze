@@ -25,15 +25,13 @@ function player(over: Partial<ProviderPlayer>): ProviderPlayer {
   };
 }
 
-// id 9 is injured -> filtered OUT of the candidate pool; ids 4-8 are available.
+// ids 1..12 available; id 99 injured -> filtered OUT of the candidate pool.
 const pool: ProviderPlayer[] = [
-  player({ id: 4, status: "a" }),
-  player({ id: 5, status: "a" }),
-  player({ id: 6, status: "a" }),
-  player({ id: 7, status: "a" }),
-  player({ id: 8, status: "a" }),
-  player({ id: 9, status: "i", form: 9, owned: 90, cost: 4 }),
+  ...Array.from({ length: 12 }, (_, i) => player({ id: i + 1, status: "a" })),
+  player({ id: 99, status: "i", form: 9, owned: 90, cost: 4 }),
 ];
+
+const XI = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
 function pick(id: number) {
   return { playerId: id, playerName: "X", reasoning: "x".repeat(25) };
@@ -43,26 +41,27 @@ beforeEach(() => {
   vi.mocked(generateObject).mockReset();
 });
 
-describe("generateCoachPicks output validation (X.1 enforcement)", () => {
+describe("generateCoachPicks output validation (XI enforcement)", () => {
   it("rejects picks containing a player outside the available candidate pool", async () => {
-    // The LLM returns id 9 (injured, not in the filtered pool).
+    // 11 picks but one (99) is injured / outside the filtered pool.
     vi.mocked(generateObject).mockResolvedValue({
-      object: { picks: [pick(4), pick(5), pick(6), pick(7), pick(9)] },
+      object: { picks: [...XI.slice(0, 10), 99].map(pick) },
     } as never);
     await expect(generateCoachPicks(38, pool)).rejects.toThrow(/candidate pool/);
   });
 
   it("accepts picks that are all within the available candidate pool", async () => {
     vi.mocked(generateObject).mockResolvedValue({
-      object: { picks: [pick(4), pick(5), pick(6), pick(7), pick(8)] },
+      object: { picks: XI.map(pick) },
     } as never);
     const res = await generateCoachPicks(38, pool);
-    expect(res.picks.map((p) => p.playerId)).toEqual([4, 5, 6, 7, 8]);
+    expect(res.picks.map((p) => p.playerId)).toEqual(XI);
   });
 
   it("rejects duplicate ids (existing guard still holds)", async () => {
+    // 11 entries but id 1 is duplicated (10 distinct) -> duplicate guard fires.
     vi.mocked(generateObject).mockResolvedValue({
-      object: { picks: [pick(4), pick(4), pick(5), pick(6), pick(7)] },
+      object: { picks: [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(pick) },
     } as never);
     await expect(generateCoachPicks(38, pool)).rejects.toThrow(/duplicate/);
   });

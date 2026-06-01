@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { coachPicks } from "@/lib/db/schema";
 import { FplScoreProvider } from "@/lib/scoring/fpl-provider";
-import { coachAgentAbi } from "@/lib/contracts/abi";
+import { onzeCoachAgentAbi } from "@/lib/contracts/abi";
 import { coachAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 import { isConfiguredRound } from "@/lib/tournaments/seasons";
 
@@ -42,18 +42,18 @@ export async function GET(req: NextRequest) {
   // Fetch actual MW points via the provider (playerId -> points).
   const pointsByPlayer = await FplScoreProvider.getRoundPoints(mw);
 
-  // Compute accuracy: coachPickPoints / sum(top5 actual points league-wide)
+  // Compute accuracy: coachPickPoints / sum(top-11 actual points league-wide)
   const coachPickPoints = row.playerIds.reduce(
     (sum: number, pid: number) => sum + (pointsByPlayer.get(pid) ?? 0),
     0
   );
-  const top5Pts = [...pointsByPlayer.values()]
+  const topNPts = [...pointsByPlayer.values()]
     .sort((a, b) => b - a)
-    .slice(0, 5)
+    .slice(0, 11)
     .reduce((sum, v) => sum + v, 0);
   const accuracy = Math.max(
     0,
-    Math.min(100, Math.round((coachPickPoints / Math.max(top5Pts, 1)) * 100))
+    Math.min(100, Math.round((coachPickPoints / Math.max(topNPts, 1)) * 100))
   );
 
   if (!process.env.COACH_PRIVATE_KEY) {
@@ -70,14 +70,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: `coach contract not configured for ${network}` }, { status: 500 });
   }
 
-  // Cast playerIds to the tuple expected by the contract.
-  // The publish-picks route enforces exactly 5 elements at insert time; the double cast is safe.
-  const picksTuple = row.playerIds as unknown as readonly [number, number, number, number, number];
+  // Cast playerIds to the array expected by the contract (uint16[11]).
+  const picksTuple = row.playerIds as number[];
 
   try {
     const txHash = await walletClient.writeContract({
       address: coachAddr,
-      abi: coachAgentAbi,
+      abi: onzeCoachAgentAbi,
       functionName: "revealPicks",
       args: [mw, picksTuple, accuracy],
     });
@@ -87,7 +86,7 @@ export async function GET(req: NextRequest) {
       .set({ revealedAt: new Date(), revealTxHash: txHash, accuracy })
       .where(eq(coachPicks.id, row.id));
 
-    return NextResponse.json({ ok: true, mw, accuracy, txHash, coachPickPoints, top5Pts });
+    return NextResponse.json({ ok: true, mw, accuracy, txHash, coachPickPoints, topNPts });
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ ok: false, error: err }, { status: 500 });
