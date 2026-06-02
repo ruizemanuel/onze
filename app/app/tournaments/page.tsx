@@ -5,10 +5,11 @@ import { chainForNetwork } from "@/lib/contracts/chain";
 import { BottomNav } from "@/components/BottomNav";
 import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
 import { FechaCard } from "@/components/FechaCard";
+import { Wordmark } from "@/components/design/Wordmark";
 import { pick5PoolAbi, pick5SeasonAbi } from "@/lib/contracts/abi";
 import { DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 import { resolvePoolById, resolveSeasonPool } from "@/lib/contracts/factory";
-import { fechaNumber, getActiveSeason } from "@/lib/tournaments/seasons";
+import { fechaLabel, fechaNumber, getActiveSeason } from "@/lib/tournaments/seasons";
 import { fechaStatus, type FechaStatus } from "@/lib/tournaments/fechaStatus";
 
 export const revalidate = 60;
@@ -17,7 +18,7 @@ export const dynamic = "force-dynamic";
 const usd = (n: bigint) => `$${(Number(n) / 1_000_000).toFixed(2)}`;
 const trunc = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
-type Row = { tournamentId: number; fechaNumber: number; round: number; status: FechaStatus; sub: string };
+type Row = { tournamentId: number; fechaNumber: number; round: number; status: FechaStatus; sub: string; label: string };
 
 async function load() {
   const season = getActiveSeason();
@@ -37,7 +38,7 @@ async function load() {
       const f = season.fechas[i];
       const pool = await resolvePoolById(client, network, f.tournamentId);
       if (!pool) {
-        rows.push({ tournamentId: f.tournamentId, fechaNumber: fechaNumber(f.tournamentId) ?? i + 1, round: f.round, status: "soon", sub: "Opens once created on-chain" });
+        rows.push({ tournamentId: f.tournamentId, fechaNumber: fechaNumber(f.tournamentId) ?? i + 1, round: f.round, status: "soon", sub: "Opens once created on-chain", label: fechaLabel(f.tournamentId) });
         continue;
       }
       const [lockTime, deposit, participants, finalized, winner, seed, scoresSubmitted] = await Promise.all([
@@ -54,7 +55,7 @@ async function load() {
       if (status === "joining") sub = `Open · ${usd(deposit)} entry · ${Number(participants)} in`;
       else if (status === "scoring") sub = `${scoresSubmitted ? "Scores in" : "Live"} · ${Number(participants)} players`;
       else sub = winner && winner !== "0x0000000000000000000000000000000000000000" ? `Winner ${trunc(winner)} · prize ${usd(seed)}` : "Settled";
-      rows.push({ tournamentId: f.tournamentId, fechaNumber: fechaNumber(f.tournamentId) ?? i + 1, round: f.round, status, sub });
+      rows.push({ tournamentId: f.tournamentId, fechaNumber: fechaNumber(f.tournamentId) ?? i + 1, round: f.round, status, sub, label: fechaLabel(f.tournamentId) });
     }
   } catch {
     // fall through with whatever rows we have
@@ -68,13 +69,13 @@ export default async function TournamentsPage() {
     <main className="min-h-dvh bg-[#08070D] text-white">
       <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24">
         <header className="flex items-center justify-between">
-          <span className="font-display text-2xl tracking-[0.2em] text-white">PICK<span className="text-[#00DF7C]">5</span></span>
+          <Wordmark />
           <ConnectedWalletPill />
         </header>
 
         <section className="pt-6">
           <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#00DF7C]">{season.label}</div>
-          <h1 className="font-display mt-1 text-4xl leading-none tracking-tight">Fechas</h1>
+          <h1 className="font-display mt-1 text-4xl leading-none tracking-tight">Fases</h1>
           <p className="mt-2 text-sm text-white/50">Play any matchday. Your points across all fechas decide the season champion.</p>
         </section>
 
@@ -88,7 +89,7 @@ export default async function TournamentsPage() {
           </Link>
         </div>
 
-        <div className="pt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">Matchdays</div>
+        <div className="pt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">Fases</div>
         <div className="mt-3 space-y-2.5">
           {rows.length === 0 ? (
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-white/50">No fechas yet · check back soon.</div>
