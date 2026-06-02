@@ -20,6 +20,7 @@ export type PlayerPickerProps = {
   excludeIds: number[];
   onPick: (id: number) => void;
   onClear?: () => void;
+  onCaptain?: () => void;
   position?: string;
   budgetRemaining?: number;
 };
@@ -31,6 +32,7 @@ export function PlayerPicker({
   excludeIds,
   onPick,
   onClear,
+  onCaptain,
   position,
   budgetRemaining,
 }: PlayerPickerProps) {
@@ -93,14 +95,27 @@ export function PlayerPicker({
             </div>
           )}
 
-          {onClear && (
-            <button
-              type="button"
-              onClick={onClear}
-              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/70 transition cursor-pointer hover:bg-white/10"
-            >
-              Remove from this slot
-            </button>
+          {(onCaptain || onClear) && (
+            <div className="flex flex-col gap-2">
+              {onCaptain && (
+                <button
+                  type="button"
+                  onClick={onCaptain}
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/70 transition cursor-pointer hover:bg-white/10"
+                >
+                  Hacer capitán
+                </button>
+              )}
+              {onClear && (
+                <button
+                  type="button"
+                  onClick={onClear}
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/70 transition cursor-pointer hover:bg-white/10"
+                >
+                  Remove from this slot
+                </button>
+              )}
+            </div>
           )}
 
           <div className="max-h-[60vh] space-y-2 overflow-y-auto">
