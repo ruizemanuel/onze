@@ -4,8 +4,9 @@ import { coachPicks } from "@/lib/db/schema";
 import { CoachPickCard } from "@/components/CoachPickCard";
 import { BottomNav } from "@/components/BottomNav";
 import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
-import { getBootstrap } from "@/lib/fpl/client";
-import { teamColor as teamColorFor } from "@/lib/fpl/teamColors";
+import { getActiveProvider } from "@/lib/scoring/providers";
+import { initialsFor, teamColorFor } from "@/lib/players/uiPlayer";
+import { Wordmark } from "@/components/design/Wordmark";
 
 export const revalidate = 300;
 export const dynamic = "force-dynamic";
@@ -18,18 +19,6 @@ const SELF_AGENT_ADDRESS =
   process.env.NEXT_PUBLIC_SELF_AGENT_ADDRESS ??
   "0x6AfE4e694613A06cCb6cc22178feDA0E3EE1Cc10";
 
-const FPL_PHOTO = (code: number) =>
-  `https://resources.premierleague.com/premierleague/photos/players/250x250/p${code}.png`;
-
-function deriveInitials(name: string): string {
-  return name
-    .split(/[\s-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 type PlayerSummary = {
   name: string;
   team: string;
@@ -40,17 +29,15 @@ type PlayerSummary = {
 
 async function buildPlayerMap(): Promise<Map<number, PlayerSummary>> {
   try {
-    const bootstrap = await getBootstrap();
-    const teamShort = new Map(bootstrap.teams.map((t) => [t.id, t.short_name]));
+    const players = await getActiveProvider().getPlayers();
     const m = new Map<number, PlayerSummary>();
-    for (const p of bootstrap.elements) {
-      const teamS = teamShort.get(p.team) ?? "";
+    for (const p of players) {
       m.set(p.id, {
-        name: p.web_name,
-        team: teamS,
-        photoUrl: FPL_PHOTO(p.code),
-        initials: deriveInitials(p.web_name),
-        teamColor: teamColorFor(teamS),
+        name: p.name,
+        team: p.team,
+        photoUrl: "",
+        initials: initialsFor(p.name),
+        teamColor: teamColorFor(p.team),
       });
     }
     return m;
@@ -84,9 +71,7 @@ export default async function CoachPage() {
     <main className="min-h-dvh bg-[#08070D] text-white">
       <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24">
         <header className="flex items-center justify-between">
-          <span className="font-display text-2xl tracking-[0.2em] text-white">
-            PICK<span className="text-[#00DF7C]">5</span>
-          </span>
+          <Wordmark />
           <ConnectedWalletPill />
         </header>
 
@@ -99,7 +84,7 @@ export default async function CoachPage() {
             <span>Verified agent</span>
           </div>
           <h1 className="font-display mt-1 text-4xl leading-none tracking-tight">
-            AI Coach
+            Onze DT
           </h1>
           <p className="mt-2 text-sm text-white/50">
             Picks are committed onchain before each matchweek and revealed
