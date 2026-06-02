@@ -7,10 +7,12 @@ import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
 import { DesktopTicketCTA } from "@/components/DesktopTicketCTA";
 import { LandingCTA } from "@/components/LandingCTA";
 import { Pitch, type PitchSlot } from "@/components/design/Pitch";
+import { Wordmark } from "@/components/design/Wordmark";
 import { Stat } from "@/components/design/Stat";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
 import { DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 import { resolveActivePool } from "@/lib/contracts/factory";
+import { formationLayout } from "@/lib/lineup/formations";
 
 export const revalidate = 60; // refresh on-chain stats once per minute
 
@@ -36,50 +38,23 @@ async function readPoolStats() {
   }
 }
 
-const FPL_PHOTO = (code: number) =>
-  `https://resources.premierleague.com/premierleague/photos/players/250x250/p${code}.png`;
-
+// 11-slot 4-3-3 preview (GK + 4 DEF + 3 MID + 3 FWD) — placeholder data only
 const PREVIEW_LINEUP: PitchSlot[] = [
-  {
-    photoUrl: FPL_PHOTO(223094),
-    initials: "EH",
-    name: "Haaland",
-    team: "MCI",
-    position: "FWD",
-    teamColor: "#6CABDD",
-  },
-  {
-    photoUrl: FPL_PHOTO(223340),
-    initials: "BS",
-    name: "Saka",
-    team: "ARS",
-    position: "MID",
-    teamColor: "#EF0107",
-  },
-  {
-    photoUrl: FPL_PHOTO(244851),
-    initials: "CP",
-    name: "Palmer",
-    team: "CHE",
-    position: "MID",
-    teamColor: "#034694",
-  },
-  {
-    photoUrl: FPL_PHOTO(221820),
-    initials: "LM",
-    name: "Martinez",
-    team: "MUN",
-    position: "DEF",
-    teamColor: "#DA291C",
-  },
-  {
-    photoUrl: FPL_PHOTO(462424),
-    initials: "WS",
-    name: "Saliba",
-    team: "ARS",
-    position: "DEF",
-    teamColor: "#EF0107",
-  },
+  // GK
+  { initials: "OR", name: "Rui", team: "ARG", position: "GK", teamColor: "#74ACDF" },
+  // DEF
+  { initials: "AT", name: "Tagliafico", team: "ARG", position: "DEF", teamColor: "#74ACDF" },
+  { initials: "ML", name: "Lisandro", team: "ARG", position: "DEF", teamColor: "#74ACDF" },
+  { initials: "CB", name: "Bastoni", team: "ITA", position: "DEF", teamColor: "#009246" },
+  { initials: "TR", name: "Renan", team: "BRA", position: "DEF", teamColor: "#009C3B" },
+  // MID
+  { initials: "LM", name: "Messi", team: "ARG", position: "MID", teamColor: "#74ACDF" },
+  { initials: "JB", name: "Bellingham", team: "ENG", position: "MID", teamColor: "#003090" },
+  { initials: "VV", name: "Vini Jr", team: "BRA", position: "MID", teamColor: "#009C3B" },
+  // FWD
+  { initials: "KM", name: "Mbappé", team: "FRA", position: "FWD", teamColor: "#002395" },
+  { initials: "EH", name: "Haaland", team: "NOR", position: "FWD", teamColor: "#EF2B2D" },
+  { initials: "LO", name: "Osimhen", team: "NGA", position: "FWD", teamColor: "#008751" },
 ];
 
 const LOCK_DATE = new Date("2026-05-16T14:00:00Z");
@@ -93,11 +68,11 @@ function timeUntil(target: Date): string {
 }
 
 const DESKTOP_TICKER = [
-  { kind: "head", text: "KICKS OFF · SAT 16 MAY · 14:00 UTC" },
+  { kind: "head", text: "MUNDIAL 2026 · 11 JUN → 19 JUL" },
   { kind: "price", html: "<b>$1</b> USDT TO PLAY" },
   { kind: "price", html: "<b>$10</b> + YIELD TO WIN" },
   { kind: "head", text: "WINNER TAKES ALL · NO-LOSS · CELO + AAVE V3" },
-  { kind: "head", text: "PICK5-BETA.VERCEL.APP" },
+  { kind: "head", text: "ONZE.VERCEL.APP" },
 ] as const;
 
 export default async function LandingPage() {
@@ -110,9 +85,7 @@ export default async function LandingPage() {
       {/* ===================== MOBILE LAYOUT (<1024px) ===================== */}
       <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 lg:hidden">
         <header className="flex items-center justify-between">
-          <span className="font-display text-2xl tracking-[0.2em] text-white">
-            PICK<span className="text-[#00DF7C]">5</span>
-          </span>
+          <Wordmark />
           <ConnectedWalletPill />
         </header>
 
@@ -121,19 +94,19 @@ export default async function LandingPage() {
             Tournament Live
           </div>
           <h1 className="font-display mt-2 text-[44px] leading-[0.95] tracking-tight">
-            Pick 5.<br />
-            Win the pool.<br />
-            <span className="text-[#00DF7C]">Lose nothing.</span>
+            Armá tu XI.<br />
+            Ganá la fase.<br />
+            <span className="text-[#00DF7C]">No perdés nada.</span>
           </h1>
           <p className="mt-3 max-w-[34ch] text-sm text-white/60">
-            Deposit $1 USDT, pick 5 Premier League players for the final 2
-            matchweeks. Your stake earns yield in Aave V3 — top scorer takes the
-            entire prize pool. Withdraw your $1 anytime after.
+            Depositá $1 USDT y armá tu XI del Mundial en cada fase. Tu depósito
+            genera yield en Aave V3 — el de mayor puntaje se lleva todo el pozo.
+            Recuperás tu $1 cuando la fase cierra.
           </p>
         </section>
 
         <section className="pt-6">
-          <Pitch slots={PREVIEW_LINEUP} />
+          <Pitch slots={PREVIEW_LINEUP} positions={formationLayout("4-3-3")} />
         </section>
 
         <section className="pt-5">
@@ -183,17 +156,17 @@ export default async function LandingPage() {
         <div className="lp-stage">
           <header className="lp-top-stripe lp-anim lp-anim-d1">
             <div className="lp-brand">
-              PICK<b>5</b>
+              ONZE
             </div>
             <div className="lp-stamp">
-              <b>PREMIER LEAGUE</b>
-              <span>FINAL · GW 37+38</span>
+              <b>MUNDIAL 2026</b>
+              <span>48 equipos · 11-jun → 19-jul</span>
             </div>
             <div aria-hidden />
           </header>
 
           <div className="lp-wordmark" aria-hidden>
-            PICK FIVE
+            ONZE
           </div>
 
           <div className="lp-pitch-svg" aria-hidden>
@@ -290,18 +263,17 @@ export default async function LandingPage() {
 
             <div className="lp-hero">
               <h1 className="lp-h1">
-                <span className="lp-h1-row lp-anim lp-anim-d3">PICK FIVE.</span>
+                <span className="lp-h1-row lp-anim lp-anim-d3">ONZE.</span>
                 <span className="lp-h1-row lp-anim lp-anim-d4">
-                  <span className="lp-h1-pop">WIN THE POOL.</span>
+                  <span className="lp-h1-pop">GANÁ LA FASE.</span>
                 </span>
                 <span className="lp-h1-row lp-anim lp-anim-d5">
-                  <span className="lp-h1-strike">LOSE NOTHING.</span>
+                  <span className="lp-h1-strike">NO PERDÉS NADA.</span>
                 </span>
               </h1>
               <p className="lp-tagline lp-anim lp-anim-d6">
-                <b>$1 USDT</b> to play. Top scorer takes the entire Aave V3 yield plus a{" "}
-                <b>{fmt(prizeUsd)} seed</b>. Everyone else gets their dollar back when the
-                whistle blows.
+                <b>$1 USDT</b> para jugar. El XI con mayor puntaje se lleva el yield de Aave V3 más el{" "}
+                <b>seed de {fmt(prizeUsd)}</b>. Todos los demás recuperan su dólar al cierre de la fase.
               </p>
               <DesktopTicketCTA />
             </div>

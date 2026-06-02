@@ -230,7 +230,7 @@ export default function ConfirmPage() {
           ) : pool.wrongNetwork ? (
             <div className="space-y-3">
               <div className="rounded-2xl border border-[#F5C842]/30 bg-[#F5C842]/5 p-4 text-center text-sm text-[#F5C842]">
-                Your wallet is on the wrong network. Pick5 runs on Celo
+                Your wallet is on the wrong network. Onze runs on Celo
                 {pool.chainId === 42220 ? " mainnet" : ` (chain ${pool.chainId})`}.
               </div>
               <PrimaryCTA

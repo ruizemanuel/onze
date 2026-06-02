@@ -13,7 +13,7 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 
-  /* Pick5 design tokens */
+  /* Onze design tokens */
   --color-bg: #08070D;
   --color-surface: rgba(255, 255, 255, 0.05);
   --color-hairline: rgba(255, 255, 255, 0.10);

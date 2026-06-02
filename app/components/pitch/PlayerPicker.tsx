@@ -137,7 +137,7 @@ export function PlayerPicker({
                     position={p.position}
                     meta={
                       <>
-                        <span>£{p.cost.toFixed(1)}</span>
+                        <span>{p.cost.toFixed(1)}M</span>
                         <span className="mx-1.5 text-white/25">·</span>
                         <span className="tabular-nums">
                           form {p.form.toFixed(1)}

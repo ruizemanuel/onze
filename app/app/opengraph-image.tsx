@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 export const runtime = "nodejs";
 export const alt =
-  "Pick5 — No-loss fantasy on Celo. Pick 5 Premier League players, win the pool, lose nothing.";
+  "Onze — Fantasy XI del Mundial on-chain en Celo. Armá tu equipo, ganá la fase, no perdés nada.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -58,8 +58,7 @@ export default async function Image() {
               marginLeft: 2,
             }}
           >
-            <span>PICK</span>
-            <span style={{ color: "#00DF7C" }}>5</span>
+            <span>ONZE</span>
           </div>
           <div
             style={{
@@ -103,9 +102,9 @@ export default async function Image() {
               flexDirection: "column",
             }}
           >
-            <span>Pick 5.</span>
-            <span>Win the pool.</span>
-            <span style={{ color: "#00DF7C" }}>Lose nothing.</span>
+            <span>Armá tu XI.</span>
+            <span>Ganá la fase.</span>
+            <span style={{ color: "#00DF7C" }}>No perdés nada.</span>
           </div>
         </div>
 
@@ -120,7 +119,7 @@ export default async function Image() {
             color: "rgba(255,255,255,0.55)",
           }}
         >
-          <span style={{ marginLeft: 4 }}>No-loss fantasy on Celo</span>
+          <span style={{ marginLeft: 4 }}>Fantasy XI del Mundial on-chain en Celo</span>
           <span style={{ marginRight: 2 }}>ERC-8004 verified AI Coach</span>
         </div>
       </div>

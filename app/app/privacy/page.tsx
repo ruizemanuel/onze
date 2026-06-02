@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Privacy Policy for Pick5 — what we collect, how we use it, and what we never see.",
+    "Privacy Policy for Onze — what we collect, how we use it, and what we never see.",
 };
 
 const LAST_UPDATED = "23 May 2026";
@@ -20,7 +20,7 @@ export default function PrivacyPage() {
             href={"/" as Route}
             className="font-display text-2xl tracking-[0.2em] text-white"
           >
-            PICK<span className="text-[#00DF7C]">5</span>
+            ONZE
           </Link>
           <Link
             href={"/" as Route}
@@ -45,11 +45,11 @@ export default function PrivacyPage() {
         <article className="mt-6 space-y-6 text-sm leading-6 text-white/75">
           <Section title="1. About this policy">
             <p>
-              This Privacy Policy describes what information Pick5
+              This Privacy Policy describes what information Onze
               (&quot;we&quot;, &quot;us&quot;) collects when you interact with
               our application at{" "}
               <span className="text-white">pick5-beta.vercel.app</span> and
-              with the Pick5 smart contracts on Celo mainnet.
+              with the Onze smart contracts on Celo mainnet.
             </p>
           </Section>
 
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong className="text-white">On-chain activity.</strong>{" "}
-                Your interactions with the Pick5 contracts (deposit, lineup
+                Your interactions with the Onze contracts (deposit, lineup
                 commitment, withdrawals, prize claim) are recorded on the Celo
                 blockchain. By nature, this data is{" "}
                 <strong className="text-white">
@@ -103,9 +103,9 @@ export default function PrivacyPage() {
               <li>
                 <strong className="text-white">Database records.</strong> We
                 maintain a leaderboard cache in a Postgres database (Neon). It
-                stores your wallet address, your matchweek scores, and your
+                stores your wallet address, your phase scores, and your
                 rank. We also maintain an optional <code>user_profiles</code>{" "}
-                table that may record an FPL display name you provide, a Self
+                table that may record a display name you provide, a Self
                 verification timestamp, and your PostHog ID.
               </li>
               <li>
@@ -125,7 +125,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 We do not have access to your private keys or seed phrase.
-                Pick5 is non-custodial — only you can sign transactions from
+                Onze is non-custodial — only you can sign transactions from
                 your wallet.
               </li>
             </ul>
@@ -152,10 +152,10 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong className="text-white">
-                  Premier League FPL API
+                  FIFA / World Cup data APIs
                 </strong>{" "}
-                (read-only) — we fetch publicly available fantasy stats; you
-                do not authenticate to FPL through us.
+                (read-only) — we fetch publicly available match and player stats; you
+                do not authenticate to these sources through us.
               </li>
               <li>
                 <strong className="text-white">Celo RPC providers</strong> —
@@ -217,7 +217,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <code>leaderboard_cache</code> and <code>user_profiles</code>{" "}
-                are retained indefinitely while Pick5 operates, unless you
+                are retained indefinitely while Onze operates, unless you
                 request deletion.
               </li>
               <li>On-chain data is permanent.</li>
@@ -225,7 +225,7 @@ export default function PrivacyPage() {
           </Section>
 
           <Section title="8. Children">
-            <p>Pick5 is for users 18 years of age and older.</p>
+            <p>Onze is for users 18 years of age and older.</p>
           </Section>
 
           <Section title="9. Contact">
