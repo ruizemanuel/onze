@@ -17,6 +17,13 @@ function emptyDraft(formation = DEFAULT_FORMATION): Draft {
   return { formation, slots: formationSlots(formation).map(() => null), captainId: null };
 }
 
+// Stable reference for the "no draft yet" case. `draftFor` is read through a Zustand
+// selector (`useLineupDraft((s) => s.draftFor(tid))`); returning a fresh emptyDraft()
+// each call makes useSyncExternalStore see a new snapshot every render -> infinite loop
+// ("getServerSnapshot should be cached"). A shared singleton is read-only here (writes
+// build fresh drafts), so handing it out is safe and keeps the selector stable.
+const EMPTY_DRAFT: Draft = emptyDraft();
+
 type LineupDraftState = {
   byFecha: Record<number, Draft>;
   draftFor: (tid: number) => Draft;
@@ -30,7 +37,7 @@ export const useLineupDraft = create<LineupDraftState>()(
   persist(
     (set, get) => ({
       byFecha: {},
-      draftFor: (tid) => get().byFecha[tid] ?? emptyDraft(),
+      draftFor: (tid) => get().byFecha[tid] ?? EMPTY_DRAFT,
       setFormation: (tid, formation) =>
         set((s) => {
           const cur = s.byFecha[tid] ?? emptyDraft();
