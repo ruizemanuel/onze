@@ -180,9 +180,9 @@ export default function MyTeamPage() {
       ? "Live"
       : `${String(lockParts.days).padStart(2, "0")}d ${String(lockParts.hours).padStart(2, "0")}h ${String(lockParts.mins).padStart(2, "0")}m`;
   const statusSub = finalized
-    ? "This fecha settled"
+    ? "This phase settled"
     : isLocked
-      ? "This fecha is live"
+      ? "This phase is live"
       : "Until kickoff";
 
   const currentMwPoints = useMemo(() => {
@@ -244,8 +244,8 @@ export default function MyTeamPage() {
           <section className="pt-6">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center text-sm text-white/50">
               {poolLoading
-                ? "Loading fecha…"
-                : "This fecha isn't open yet. Check the fechas hub."}
+                ? "Loading phase…"
+                : "This phase isn't open yet. Check the phases hub."}
             </div>
           </section>
         </div>
@@ -292,19 +292,19 @@ export default function MyTeamPage() {
           <p className="mt-2 text-sm text-white/50">
             {finalized
               ? hasLineup
-                ? "This fecha settled. Your final lineup is below."
-                : "This fecha settled. You didn't join it."
+                ? "This phase settled. Your final lineup is below."
+                : "This phase settled. You didn't join it."
               : isLocked
                 ? hasLineup
-                  ? "This fecha is live. Your lineup is locked."
-                  : "This fecha is live. Entries are closed."
-                : `This fecha kicks off in ${lockParts.days}d ${lockParts.hours}h. Lineup locked.`}
+                  ? "This phase is live. Your lineup is locked."
+                  : "This phase is live. Entries are closed."
+                : `This phase kicks off in ${lockParts.days}d ${lockParts.hours}h. Lineup locked.`}
           </p>
           <Link
             href={"/tournaments" as Route}
             className="mt-4 inline-flex items-center gap-1 text-xs text-white/50 hover:text-white/80"
           >
-            ← Todas las fechas
+            ← All phases
           </Link>
         </section>
 
@@ -368,18 +368,18 @@ export default function MyTeamPage() {
                   value={String(totalScore)}
                   sub={
                     finalized
-                      ? "Fecha final"
+                      ? "Phase final"
                       : !isLocked
                         ? "yet to play"
                         : cachedTotal > 0
-                          ? "Fecha total"
-                          : "This fecha live"
+                          ? "Phase total"
+                          : "This phase live"
                   }
                 />
                 <Stat
                   label="Rank"
                   value={rankLabel}
-                  sub={showRank ? "this fecha" : "after first points"}
+                  sub={showRank ? "this phase" : "after first points"}
                 />
                 <Stat
                   label={statusLabel}

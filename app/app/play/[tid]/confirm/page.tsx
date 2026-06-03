@@ -205,7 +205,7 @@ export default function ConfirmPage() {
 
         <section className="pt-5">
           {!poolAddr ? (
-            <PrimaryCTA label="Loading fecha…" disabled />
+            <PrimaryCTA label="Loading phase…" disabled />
           ) : pool.hasJoined ? (
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70">
               You already joined this fecha.
