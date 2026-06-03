@@ -14,6 +14,20 @@ const ADDRESSES = {
 // 1 USDT (6 decimals). Per-tournament deposit, passed to createTournament.
 const DEPOSIT = 1_000_000n;
 
+const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
+
+// forno load-balances across independently-syncing nodes, so a read right after a
+// write (e.g. tournamentBy(0) right after createTournament) can hit a lagging node
+// and return the zero address even though the pool was created. Retry until non-zero.
+async function retryNonZero(getter: () => Promise<string>, label: string): Promise<string> {
+  for (let i = 0; i < 12; i++) {
+    const v = await getter();
+    if (v && v !== ZERO_ADDR) return v;
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  throw new Error(`${label} still zero after retries (forno read lag?) — re-read the factory before wiring`);
+}
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
@@ -29,13 +43,30 @@ async function main() {
   console.log("Network:", network.name, network.chainId.toString());
   console.log("Balance (CELO):", ethers.formatEther(await ethers.provider.getBalance(deployer.address)));
 
-  // First Onze tournament window — the World Cup GROUP STAGE. Adjust before deploying.
-  const lockTime = Math.floor(new Date("2026-06-11T15:00:00Z").getTime() / 1000);
-  const endTime  = Math.floor(new Date("2026-06-28T23:00:00Z").getTime() / 1000);
+  // First Onze tournament window — the World Cup GROUP STAGE.
+  // Timestamps are env-overridable (unix seconds). SMOKE=1 sets a short testnet
+  // window so the full join -> lock -> submitScores -> finalize cycle can run today.
+  // Defaults = the real World Cup dates (used for the mainnet deploy).
+  const nowS = Math.floor(Date.now() / 1000);
+  const SMOKE = process.env.SMOKE === "1";
+  const lockTime = process.env.LOCK_TIME
+    ? Number(process.env.LOCK_TIME)
+    : SMOKE
+      ? nowS + 8 * 60 // 8 min — enough to seed + join, then it locks
+      : Math.floor(new Date("2026-06-11T15:00:00Z").getTime() / 1000);
+  const endTime = process.env.END_TIME
+    ? Number(process.env.END_TIME)
+    : SMOKE
+      ? nowS + 20 * 60
+      : Math.floor(new Date("2026-06-28T23:00:00Z").getTime() / 1000);
   const label = process.env.TOURNAMENT_LABEL ?? "WC Group Stage";
 
-  // Season window — the whole World Cup. Adjust before deploying.
-  const seasonEndTime = Math.floor(new Date("2026-07-20T03:00:00Z").getTime() / 1000);
+  // Season window — the whole World Cup.
+  const seasonEndTime = process.env.SEASON_END_TIME
+    ? Number(process.env.SEASON_END_TIME)
+    : SMOKE
+      ? nowS + 30 * 60
+      : Math.floor(new Date("2026-07-20T03:00:00Z").getTime() / 1000);
   const seasonLabel = process.env.SEASON_LABEL ?? "World Cup 2026";
 
   let usdt: string, aavePool: string, aUsdt: string;
@@ -97,7 +128,7 @@ async function main() {
   // 3) First tournament (World Cup group stage)
   console.log("\nCreating first tournament (group stage)...");
   await (await factory.createTournament(lockTime, endTime, DEPOSIT, label)).wait();
-  const poolAddr = await factory.tournamentBy(0);
+  const poolAddr = await retryNonZero(() => factory.tournamentBy(0), "tournamentBy(0)");
   console.log("Tournament #0 pool:", poolAddr);
 
   // 3b) SeasonPool implementation + the World Cup season
@@ -113,7 +144,7 @@ async function main() {
 
   console.log("\nCreating the World Cup season...");
   await (await factory.createSeason(seasonEndTime, seasonLabel)).wait();
-  const seasonAddr = await factory.seasonBy(0);
+  const seasonAddr = await retryNonZero(() => factory.seasonBy(0), "seasonBy(0)");
   console.log("Season #0 pool:", seasonAddr);
 
   // 4) OnzeCoachAgent (NEW ERC-8004 identity; #9056 stays the Premier coach)
