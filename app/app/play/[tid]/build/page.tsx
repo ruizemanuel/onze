@@ -92,6 +92,8 @@ export default function BuildPage() {
     prefill(tid, carried);
   }, [priorTid, priorPoolAddr, priorLineup, priorCaptainId, playersLoaded, draft.slots, playerMap, prefill, tid]);
 
+  const isKnockout = priorTid !== undefined;
+
   const budget = fechaBudget(tid);
   const positions = formationLayout(draft.formation);
   const slotPositions = formationSlots(draft.formation);
@@ -217,6 +219,11 @@ export default function BuildPage() {
           <p className="mt-2 text-sm text-white/50">
             Pick a formation, tap a slot, and fill your team within budget.
           </p>
+          {isKnockout && (
+            <p className="mt-2 rounded-xl border border-[#F5C842]/30 bg-[#F5C842]/10 px-3 py-2 text-xs text-[#F5C842]">
+              Your knockout XI rides the whole bracket — players from teams that get eliminated stop scoring. Pick players (and a captain) from teams you expect to go far.
+            </p>
+          )}
         </section>
 
         {/* Formation chips */}
