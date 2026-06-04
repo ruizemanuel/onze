@@ -2,11 +2,11 @@ import { desc } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { coachPicks } from "@/lib/db/schema";
 import { CoachPickCard } from "@/components/CoachPickCard";
-import { BottomNav } from "@/components/BottomNav";
 import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
 import { getActiveProvider } from "@/lib/scoring/providers";
 import { initialsFor, teamColorFor } from "@/lib/players/uiPlayer";
 import { Wordmark } from "@/components/design/Wordmark";
+import { AppShell } from "@/components/design/AppShell";
 
 export const revalidate = 300;
 export const dynamic = "force-dynamic";
@@ -25,6 +25,7 @@ type PlayerSummary = {
   photoUrl: string;
   initials: string;
   teamColor: string;
+  teamId?: number;
 };
 
 async function buildPlayerMap(): Promise<Map<number, PlayerSummary>> {
@@ -38,6 +39,7 @@ async function buildPlayerMap(): Promise<Map<number, PlayerSummary>> {
         photoUrl: "",
         initials: initialsFor(p.name),
         teamColor: teamColorFor(p.team),
+        teamId: p.teamId,
       });
     }
     return m;
@@ -68,9 +70,9 @@ export default async function CoachPage() {
         );
 
   return (
-    <main className="min-h-dvh bg-[#08070D] text-white">
-      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24">
-        <header className="flex items-center justify-between">
+    <AppShell active="coach">
+      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24 lg:max-w-5xl lg:px-0 lg:pt-0 lg:pb-0">
+        <header className="flex items-center justify-between lg:hidden">
           <Wordmark />
           <ConnectedWalletPill />
         </header>
@@ -139,9 +141,9 @@ export default async function CoachPage() {
           </div>
         </section>
 
-        <div className="pt-6 space-y-4">
+        <div className="pt-6 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
           {rows.length === 0 && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center lg:col-span-2">
               <p className="text-sm text-white/60">No picks yet.</p>
               <p className="mt-1 text-[11px] text-white/40">
                 The Coach will publish picks before the next matchweek.
@@ -169,6 +171,9 @@ export default async function CoachPage() {
                 playerTeamColors: row.playerIds.map(
                   (id) => players.get(id)?.teamColor ?? null,
                 ),
+                playerTeamIds: row.playerIds.map(
+                  (id) => players.get(id)?.teamId ?? null,
+                ),
                 reasoning: row.reasoning ?? [],
                 commitmentHash: row.commitmentHash,
                 publishTxHash: row.publishTxHash,
@@ -179,7 +184,6 @@ export default async function CoachPage() {
           ))}
         </div>
       </div>
-      <BottomNav />
-    </main>
+    </AppShell>
   );
 }

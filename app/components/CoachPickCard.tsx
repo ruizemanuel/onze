@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useFallbackPhoto } from "@/hooks/useFallbackPhoto";
+import { kitUrl } from "@/lib/players/kit";
 
 export type CoachPickRow = {
   mw: number;
@@ -12,6 +13,7 @@ export type CoachPickRow = {
   playerPhotos: (string | null)[];
   playerInitials: (string | null)[];
   playerTeamColors: (string | null)[];
+  playerTeamIds: (number | null)[];
   reasoning: string[];
   commitmentHash: string;
   publishTxHash: string | null;
@@ -77,6 +79,7 @@ export function CoachPickCard({ row }: { row: CoachPickRow }) {
               initials={row.playerInitials[i] ?? "?"}
               teamColor={row.playerTeamColors[i] ?? "#00DF7C"}
               reasoning={row.reasoning[i] ?? ""}
+              kitUrl={kitUrl(row.playerTeamIds[i] ?? undefined)}
             />
           ))}
         </div>
@@ -116,6 +119,7 @@ function PickCard({
   initials,
   teamColor,
   reasoning,
+  kitUrl: kitUrlProp,
 }: {
   id: number;
   name: string;
@@ -124,6 +128,7 @@ function PickCard({
   initials: string;
   teamColor: string;
   reasoning: string;
+  kitUrl?: string;
 }) {
   const [open, setOpen] = useState(false);
   const { src: resolvedSrc, onError: onPhotoError } = useFallbackPhoto(
@@ -135,30 +140,36 @@ function PickCard({
   return (
     <div className="w-[200px] shrink-0 snap-start rounded-xl border border-white/10 bg-[#0F0E14] p-3">
       <div className="flex items-center gap-3">
-        <div
-          className="relative size-12 shrink-0 rounded-full p-[2px]"
-          style={{
-            background: `conic-gradient(from 180deg, ${teamColor}, transparent 70%, ${teamColor})`,
-          }}
-        >
-          <div className="size-full overflow-hidden rounded-full bg-[#13121A] flex items-center justify-center relative">
-            {showPhoto ? (
-              <Image
-                src={resolvedSrc!}
-                alt={name}
-                fill
-                sizes="48px"
-                className="object-cover scale-110"
-                unoptimized
-                onError={onPhotoError}
-              />
-            ) : (
-              <span className="text-xs font-semibold text-white/80">
-                {initials}
-              </span>
-            )}
+        {kitUrlProp ? (
+          <div className="relative size-12 shrink-0">
+            <Image src={kitUrlProp} alt={name} fill sizes="48px" className="object-contain" unoptimized />
           </div>
-        </div>
+        ) : (
+          <div
+            className="relative size-12 shrink-0 rounded-full p-[2px]"
+            style={{
+              background: `conic-gradient(from 180deg, ${teamColor}, transparent 70%, ${teamColor})`,
+            }}
+          >
+            <div className="size-full overflow-hidden rounded-full bg-[#13121A] flex items-center justify-center relative">
+              {showPhoto ? (
+                <Image
+                  src={resolvedSrc!}
+                  alt={name}
+                  fill
+                  sizes="48px"
+                  className="object-cover scale-110"
+                  unoptimized
+                  onError={onPhotoError}
+                />
+              ) : (
+                <span className="text-xs font-semibold text-white/80">
+                  {initials}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-white">{name}</div>
           <div className="text-[10px] text-white/50">
