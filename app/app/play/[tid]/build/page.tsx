@@ -20,7 +20,9 @@ import {
   FORMATION_KEYS,
 } from "@/lib/lineup/formations";
 import { validateLineup, lineupBudgetSpent } from "@/lib/lineup/validate";
-import { fechaBudget } from "@/lib/tournaments/seasons";
+import { fechaBudget, priorPhaseTid, getActiveSeason } from "@/lib/tournaments/seasons";
+import { useLineup } from "@/hooks/useLineup";
+import { buildCarryForwardDraft } from "@/lib/lineup/carry-forward";
 
 export default function BuildPage() {
   const router = useRouter();
@@ -29,18 +31,24 @@ export default function BuildPage() {
   const { poolAddr, isLoading } = useFechaPool(tid);
   const pool = usePool(poolAddr);
 
+  const priorTid = priorPhaseTid(getActiveSeason(), tid);
+  const { poolAddr: priorPoolAddr } = useFechaPool(priorTid);
+  const { lineup: priorLineup, captainId: priorCaptainId } = useLineup(priorPoolAddr);
+
   const draft = useLineupDraft((s) => s.draftFor(tid));
   const setFormation = useLineupDraft((s) => s.setFormation);
   const setSlot = useLineupDraft((s) => s.setSlot);
   const setCaptain = useLineupDraft((s) => s.setCaptain);
+  const prefill = useLineupDraft((s) => s.prefill);
 
   const [players, setPlayers] = useState<UiPlayer[]>([]);
+  const [playersLoaded, setPlayersLoaded] = useState(false);
   const [pickerSlot, setPickerSlot] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/players")
       .then((r) => r.json())
-      .then((d: { players: UiPlayer[] }) => setPlayers(d.players))
+      .then((d: { players: UiPlayer[] }) => { setPlayers(d.players); setPlayersLoaded(true); })
       .catch(() => setPlayers([]));
   }, []);
 
@@ -56,7 +64,33 @@ export default function BuildPage() {
     return m;
   }, [players]);
 
+  // Filter eliminated players out of NEW picks only. playerMap/costById stay on the
+  // full `players` list so an already-picked player whose team got knocked out (or a
+  // carried-forward pick) still renders on the pitch and counts toward the budget.
   const pickablePlayers = useMemo(() => players.filter((p) => !p.eliminated), [players]);
+
+  // Carry-forward: when the knockout draft is empty, pre-fill it from the user's
+  // on-chain group XI (dropping eliminated players, resetting an eliminated captain).
+  // Idempotent: only runs while this phase's draft is still empty, so it never
+  // clobbers in-progress edits. Group stage has no prior phase -> priorTid undefined.
+  useEffect(() => {
+    // first phase: nothing to carry. Strict === undefined: tournamentId 0 is a valid id, so don't use a falsy check.
+    if (priorTid === undefined) return;
+    if (!priorPoolAddr) return;                             // prior pool unresolved: useLineup would read the active pool, not the prior one
+    if (!draft.slots.every((s) => s === null)) return;      // don't overwrite an in-progress draft
+    if (!priorLineup || !playersLoaded || playerMap.size === 0) return;
+    const priorIds = priorLineup.map((x) => Number(x)).filter((id) => id !== 0);
+    if (priorIds.length === 0) return;                       // user didn't play the prior phase
+    const carried = buildCarryForwardDraft(
+      priorIds,
+      priorCaptainId ?? null,
+      (id) => {
+        const p = playerMap.get(id);
+        return p ? { position: p.position, eliminated: p.eliminated } : undefined;
+      },
+    );
+    prefill(tid, carried);
+  }, [priorTid, priorPoolAddr, priorLineup, priorCaptainId, playersLoaded, draft.slots, playerMap, prefill, tid]);
 
   const budget = fechaBudget(tid);
   const positions = formationLayout(draft.formation);

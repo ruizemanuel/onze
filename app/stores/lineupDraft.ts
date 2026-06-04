@@ -31,6 +31,7 @@ type LineupDraftState = {
   setSlot: (tid: number, idx: number, id: PlayerId | null) => void;
   setCaptain: (tid: number, id: PlayerId) => void;
   clear: (tid: number) => void;
+  prefill: (tid: number, draft: Draft) => void;
 };
 
 export const useLineupDraft = create<LineupDraftState>()(
@@ -65,6 +66,8 @@ export const useLineupDraft = create<LineupDraftState>()(
         }),
       clear: (tid) =>
         set((s) => ({ byFecha: { ...s.byFecha, [tid]: emptyDraft() } })),
+      prefill: (tid, draft) =>
+        set((s) => ({ byFecha: { ...s.byFecha, [tid]: draft } })),
     }),
     { name: "onze-lineup-draft-v1" },
   ),
