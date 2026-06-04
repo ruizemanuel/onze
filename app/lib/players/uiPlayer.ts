@@ -13,6 +13,7 @@ export type UiPlayer = {
   points: number;
   photoUrl: string;
   initials: string;
+  eliminated: boolean;
 };
 
 /** Two-letter initials from a name ("Lionel Messi" -> "LM", "Neymar" -> "NE"). */
@@ -48,5 +49,6 @@ export function providerPlayerToUi(p: ProviderPlayer): UiPlayer {
     points: p.totalPoints,
     photoUrl: "", // provider feed has no photo; PlayerSlot falls back to initials
     initials: initialsFor(p.name),
+    eliminated: p.eliminated ?? false,
   };
 }

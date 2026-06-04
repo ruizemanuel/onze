@@ -18,6 +18,11 @@ describe("providerPlayerToUi", () => {
     expect(ui.initials).toBe("LM");
     expect(ui.teamColor).toMatch(/^#[0-9A-Fa-f]{6}$/);
     expect(ui.photoUrl).toBe("");
+    expect(ui.eliminated).toBe(false);
+  });
+  it("passes eliminated: true when the provider player is eliminated", () => {
+    const ui = providerPlayerToUi({ ...base, eliminated: true });
+    expect(ui.eliminated).toBe(true);
   });
   it("gives the same team the same color (stable)", () => {
     expect(teamColorFor("ARG")).toBe(teamColorFor("ARG"));

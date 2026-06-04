@@ -6,8 +6,8 @@ import {
 import type { FifaFantasyPlayer, FifaSquad } from "@/lib/worldcup/client";
 
 const squads: FifaSquad[] = [
-  { id: 1, name: "Argentina", abbr: "ARG" },
-  { id: 2, name: "France" }, // no abbr -> falls back to name
+  { id: 1, name: "Argentina", abbr: "ARG", isEliminated: true },
+  { id: 2, name: "France" }, // no abbr -> name fallback; isEliminated undefined -> false
 ];
 
 const players: FifaFantasyPlayer[] = [
@@ -31,12 +31,14 @@ describe("fifaPlayersToProviderPlayers", () => {
       id: 10, name: "Messi", team: "ARG", position: "FWD",
       cost: 12.5, form: 5.0, owned: 40.2, totalPoints: 7, status: "playing",
       chanceThisRound: null, chanceNextRound: null,
+      eliminated: true,
     });
   });
   it("uses firstName+lastName when knownName is null, and squad name when abbr is missing", () => {
     const out = fifaPlayersToProviderPlayers(players, squads);
     expect(out[1].name).toBe("Kylian Mbappé");
     expect(out[1].team).toBe("France");
+    expect(out[1].eliminated).toBe(false);
   });
 });
 

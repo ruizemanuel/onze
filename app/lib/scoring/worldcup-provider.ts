@@ -29,6 +29,7 @@ export function fifaPlayersToProviderPlayers(
       // (the seam treats null as "fit", same as FPL when data is unavailable).
       chanceThisRound: null,
       chanceNextRound: null,
+      eliminated: squad?.isEliminated ?? false,
     };
   });
 }

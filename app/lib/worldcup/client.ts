@@ -31,6 +31,7 @@ export type FifaSquad = {
   id: number;     // matches FifaFantasyPlayer.squadId (1..48, the World Cup field)
   name: string;   // e.g. "Algeria"
   abbr?: string;  // 3-letter code, e.g. "ALG"
+  isEliminated?: boolean; // squads.json flag — true once the squad is knocked out
 };
 
 export type FifaRound = {

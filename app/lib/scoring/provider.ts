@@ -15,6 +15,7 @@ export type ProviderPlayer = {
   status: string; // provider-defined availability status (e.g. FPL: "a" available, "d" doubtful, "i" injured, "s" suspended, "u"/"n" out)
   chanceThisRound: number | null; // 0-100 probability of featuring this round; null = data unavailable (treat as fit)
   chanceNextRound: number | null; // same, for the next round
+  eliminated?: boolean; // true if the player's team is out of the tournament (WC); FPL leaves it unset
 };
 
 export interface ScoreProvider {
