@@ -3,13 +3,13 @@ import { createPublicClient, http } from "viem";
 import { chainForNetwork } from "@/lib/contracts/chain";
 import { Leaderboard } from "@/components/Leaderboard";
 import { SeasonPrizeBanner } from "@/components/SeasonPrizeBanner";
-import { BottomNav } from "@/components/BottomNav";
 import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
 import { Wordmark } from "@/components/design/Wordmark";
 import { pick5PoolAbi } from "@/lib/contracts/abi";
 import { DEFAULT_NETWORK } from "@/lib/contracts/addresses";
 import { resolvePoolById } from "@/lib/contracts/factory";
 import { getActiveSeason } from "@/lib/tournaments/seasons";
+import { AppShell } from "@/components/design/AppShell";
 
 export const revalidate = 60;
 export const dynamic = "force-dynamic";
@@ -35,9 +35,9 @@ async function countSettled(): Promise<{ settled: number; total: number }> {
 export default async function LeaderboardPage() {
   const { settled, total } = await countSettled();
   return (
-    <main className="min-h-dvh bg-[#08070D] text-white">
-      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24">
-        <header className="flex items-center justify-between">
+    <AppShell active="ranking" topbarTitle={getActiveSeason().label}>
+      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24 lg:max-w-3xl lg:px-0 lg:pt-0 lg:pb-0">
+        <header className="flex items-center justify-between lg:hidden">
           <Wordmark />
           <ConnectedWalletPill />
         </header>
@@ -58,7 +58,6 @@ export default async function LeaderboardPage() {
           </Suspense>
         </div>
       </div>
-      <BottomNav />
-    </main>
+    </AppShell>
   );
 }
