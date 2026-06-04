@@ -89,6 +89,10 @@ export default function BuildPage() {
         return p ? { position: p.position, eliminated: p.eliminated } : undefined;
       },
     );
+    // Nothing survived to carry (every prior player's team is out): leave the draft
+    // empty for a fresh build. Also prevents a render loop — prefilling an all-null
+    // draft keeps the "draft is empty" guard above satisfied and would re-fire forever.
+    if (carried.slots.every((s) => s === null)) return;
     prefill(tid, carried);
   }, [priorTid, priorPoolAddr, priorLineup, priorCaptainId, playersLoaded, draft.slots, playerMap, prefill, tid]);
 
