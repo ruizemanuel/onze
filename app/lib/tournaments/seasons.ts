@@ -39,11 +39,7 @@ export const SEASONS: Season[] = [
     // them to a zero address and the builder gates the join ("not open yet").
     fechas: [
       { tournamentId: 100, round: 1, rounds: [1, 2, 3], label: "Group Stage", budget: 100 },
-      { tournamentId: 101, round: 4, rounds: [4], label: "Round of 32", budget: 105 },
-      { tournamentId: 102, round: 5, rounds: [5], label: "Round of 16", budget: 105 },
-      { tournamentId: 103, round: 6, rounds: [6], label: "Quarter-finals", budget: 105 },
-      { tournamentId: 104, round: 7, rounds: [7], label: "Semi-finals", budget: 105 },
-      { tournamentId: 105, round: 8, rounds: [8], label: "Final", budget: 105 },
+      { tournamentId: 101, round: 4, rounds: [4, 5, 6, 7, 8], label: "Knockout", budget: 105 },
     ],
   },
 ];
@@ -123,4 +119,11 @@ export function fechaLabel(tournamentId: number): string {
     if (f) return f.label ?? `GW${f.round}`;
   }
   return `#${tournamentId}`;
+}
+
+/** The tournamentId of the phase immediately before `tournamentId` in its season
+ * (e.g. Group Stage for the Knockout pool), or undefined if it's the first phase. */
+export function priorPhaseTid(season: Season, tournamentId: number): number | undefined {
+  const idx = season.fechas.findIndex((f) => f.tournamentId === tournamentId);
+  return idx > 0 ? season.fechas[idx - 1].tournamentId : undefined;
 }
