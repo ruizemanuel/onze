@@ -23,6 +23,7 @@ import { validateLineup, lineupBudgetSpent } from "@/lib/lineup/validate";
 import { fechaBudget, priorPhaseTid, getActiveSeason } from "@/lib/tournaments/seasons";
 import { useLineup } from "@/hooks/useLineup";
 import { buildCarryForwardDraft } from "@/lib/lineup/carry-forward";
+import { kitUrl } from "@/lib/players/kit";
 
 export default function BuildPage() {
   const router = useRouter();
@@ -121,6 +122,7 @@ export default function BuildPage() {
       name: p.name,
       team: p.team,
       position: p.position,
+      kitUrl: kitUrl(p.teamId),
     };
   });
 

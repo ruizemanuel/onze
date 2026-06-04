@@ -15,6 +15,7 @@ export type PlayerSlotProps = {
   size?: PlayerSlotSize;
   showLabel?: boolean;
   captain?: boolean;
+  kitUrl?: string;
 };
 
 export const SIZE_PX: Record<PlayerSlotSize, number> = {
@@ -33,6 +34,7 @@ export function PlayerSlot({
   size = "lg",
   showLabel = true,
   captain = false,
+  kitUrl,
 }: PlayerSlotProps) {
   const px = SIZE_PX[size];
   const labelInitialsCls =
@@ -49,32 +51,43 @@ export function PlayerSlot({
       style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.5))" }}
     >
       <div className="relative" style={{ width: px, height: px }}>
-        <div
-          className="absolute inset-0 rounded-full p-[3px]"
-          style={{
-            background: `conic-gradient(from 180deg, ${teamColor}, transparent 70%, ${teamColor})`,
-          }}
-        >
-          <div className="size-full rounded-full bg-[#13121A] overflow-hidden flex items-center justify-center relative">
-            {showPhoto ? (
-              <Image
-                src={resolvedSrc!}
-                alt={name ?? ""}
-                fill
-                sizes={`${px}px`}
-                className="object-cover scale-110"
-                unoptimized
-                onError={onPhotoError}
-              />
-            ) : initials ? (
-              <span
-                className={`font-semibold text-white/90 tracking-wide ${labelInitialsCls}`}
-              >
-                {initials}
-              </span>
-            ) : null}
+        {kitUrl ? (
+          <Image
+            src={kitUrl}
+            alt={name ?? ""}
+            fill
+            sizes={`${px}px`}
+            className="object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
+            unoptimized
+          />
+        ) : (
+          <div
+            className="absolute inset-0 rounded-full p-[3px]"
+            style={{
+              background: `conic-gradient(from 180deg, ${teamColor}, transparent 70%, ${teamColor})`,
+            }}
+          >
+            <div className="size-full rounded-full bg-[#13121A] overflow-hidden flex items-center justify-center relative">
+              {showPhoto ? (
+                <Image
+                  src={resolvedSrc!}
+                  alt={name ?? ""}
+                  fill
+                  sizes={`${px}px`}
+                  className="object-cover scale-110"
+                  unoptimized
+                  onError={onPhotoError}
+                />
+              ) : initials ? (
+                <span
+                  className={`font-semibold text-white/90 tracking-wide ${labelInitialsCls}`}
+                >
+                  {initials}
+                </span>
+              ) : null}
+            </div>
           </div>
-        </div>
+        )}
         {captain && (
           <span
             className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-[#F5C842] text-[10px] font-bold text-black"
