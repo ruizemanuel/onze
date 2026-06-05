@@ -7,8 +7,9 @@ import { useEffect, useMemo, useState } from "react";
 import { parseUnits } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { toast } from "sonner";
-import { BottomNav } from "@/components/BottomNav";
 import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
+import { AppShell } from "@/components/design/AppShell";
+import { PhaseSwitcher } from "@/components/design/PhaseSwitcher";
 import { PlayerRow } from "@/components/design/PlayerRow";
 import { PrimaryCTA } from "@/components/design/PrimaryCTA";
 import { Wordmark } from "@/components/design/Wordmark";
@@ -16,6 +17,8 @@ import { useLineupDraft } from "@/stores/lineupDraft";
 import { useFechaPool } from "@/hooks/useFechaPool";
 import { usePool } from "@/hooks/usePool";
 import { posthog } from "@/lib/posthog";
+import { kitUrl } from "@/lib/players/kit";
+import { getActiveSeason, fechaLabel } from "@/lib/tournaments/seasons";
 import type { UiPlayer } from "@/lib/players/uiPlayer";
 
 async function celebrate() {
@@ -95,18 +98,20 @@ export default function ConfirmPage() {
 
   if (!isConnected) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#08070D] p-6 text-white">
-        <p className="text-center text-white/70">
-          Connect your wallet to continue.
-        </p>
-        <ConnectedWalletPill />
-        <Link
-          href={"/" as Route}
-          className="text-xs text-white/40 underline-offset-4 hover:underline"
-        >
-          Back to home
-        </Link>
-      </main>
+      <AppShell active="home">
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 lg:min-h-[70vh]">
+          <p className="text-center text-white/70">
+            Connect your wallet to continue.
+          </p>
+          <ConnectedWalletPill />
+          <Link
+            href={"/" as Route}
+            className="text-xs text-white/40 underline-offset-4 hover:underline"
+          >
+            Back to home
+          </Link>
+        </div>
+      </AppShell>
     );
   }
   if (draft.slots.some((x) => x === null) || draft.captainId == null) return null;
@@ -149,9 +154,13 @@ export default function ConfirmPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#08070D] text-white">
-      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24">
-        <header className="flex items-center justify-between">
+    <AppShell
+      active="home"
+      topbarTitle={<>{getActiveSeason().label} · {fechaLabel(tid)}</>}
+      topbarRight={<PhaseSwitcher currentTid={tid} hrefFor={(t) => `/play/${t}/confirm`} />}
+    >
+      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24 lg:max-w-none lg:px-0 lg:pt-0 lg:pb-0">
+        <header className="flex items-center justify-between lg:hidden">
           <Wordmark />
           <ConnectedWalletPill />
         </header>
@@ -168,96 +177,100 @@ export default function ConfirmPage() {
           </p>
         </section>
 
-        <section className="pt-5 space-y-2">
-          {completed.map((id, i) => {
-            const p = playerMap.get(id);
-            const isCaptain = id === draft.captainId;
-            return (
-              <PlayerRow
-                key={`${id}-${i}`}
-                photoUrl={p?.photoUrl}
-                initials={p?.initials ?? `#${id}`}
-                teamColor={p?.teamColor}
-                name={p?.name ?? `Player #${id}`}
-                team={p?.team}
-                position={p?.position}
-                right={isCaptain ? <span className="text-[#F5C842] font-bold text-sm">C</span> : undefined}
-              />
-            );
-          })}
-        </section>
+        <div className="lg:grid lg:grid-cols-[1.4fr_1fr] lg:gap-8 lg:items-start">
+          <section className="pt-5 space-y-2">
+            {completed.map((id, i) => {
+              const p = playerMap.get(id);
+              const isCaptain = id === draft.captainId;
+              return (
+                <PlayerRow
+                  key={`${id}-${i}`}
+                  photoUrl={p?.photoUrl}
+                  initials={p?.initials ?? `#${id}`}
+                  teamColor={p?.teamColor}
+                  name={p?.name ?? `Player #${id}`}
+                  team={p?.team}
+                  position={p?.position}
+                  kitUrl={kitUrl(p?.teamId)}
+                  right={isCaptain ? <span className="text-[#F5C842] font-bold text-sm">C</span> : undefined}
+                />
+              );
+            })}
+          </section>
 
-        <section className="pt-5">
-          <div className="rounded-2xl border border-[#F5C842]/30 bg-[#F5C842]/5 p-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">
-                Total
-              </span>
-              <span className="font-display text-3xl tracking-tight text-[#F5C842] tabular-nums">
-                $1.00
-              </span>
-            </div>
-            <p className="mt-1 text-[11px] text-white/40">
-              Refundable in full after this phase settles, regardless of outcome.
-            </p>
-          </div>
-        </section>
-
-        <section className="pt-5">
-          {!poolAddr ? (
-            <PrimaryCTA label="Loading phase…" disabled />
-          ) : pool.hasJoined ? (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70">
-              You already joined this fecha.
-              <Link
-                href={`/play/${tid}` as Route}
-                className="ml-1 text-[#00DF7C] underline-offset-4 hover:underline"
-              >
-                Go to your team →
-              </Link>
-            </div>
-          ) : pool.isLocked ? (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70">
-              Entries closed — this fecha has locked. New lineups can
-              no longer be submitted.
-              <Link
-                href={"/leaderboard" as Route}
-                className="ml-1 text-[#00DF7C] underline-offset-4 hover:underline"
-              >
-                See the standings →
-              </Link>
-            </div>
-          ) : pool.wrongNetwork ? (
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-[#F5C842]/30 bg-[#F5C842]/5 p-4 text-center text-sm text-[#F5C842]">
-                Your wallet is on the wrong network. Onze runs on Celo
-                {pool.chainId === 42220 ? " mainnet" : ` (chain ${pool.chainId})`}.
+          <div className="min-w-0">
+            <section className="pt-5">
+              <div className="rounded-2xl border border-[#F5C842]/30 bg-[#F5C842]/5 p-4">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">
+                    Total
+                  </span>
+                  <span className="font-display text-3xl tracking-tight text-[#F5C842] tabular-nums">
+                    $1.00
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-white/40">
+                  Refundable in full after this phase settles, regardless of outcome.
+                </p>
               </div>
-              <PrimaryCTA
-                label="Switch to Celo"
-                onClick={() => switchChain({ chainId: pool.chainId })}
-                loading={switchPending}
-              />
-            </div>
-          ) : step === "approve" ? (
-            <PrimaryCTA
-              label="Approve · $1 USDT"
-              onClick={onApprove}
-              loading={busy}
-            />
-          ) : (
-            <PrimaryCTA
-              label="Submit Lineup"
-              onClick={onJoin}
-              loading={busy}
-            />
-          )}
-          <p className="mt-3 text-center text-[11px] text-white/40">
-            Two-step: approve once, then submit your lineup on-chain.
-          </p>
-        </section>
+            </section>
+
+            <section className="pt-5">
+              {!poolAddr ? (
+                <PrimaryCTA label="Loading phase…" disabled />
+              ) : pool.hasJoined ? (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70">
+                  You already joined this fecha.
+                  <Link
+                    href={`/play/${tid}` as Route}
+                    className="ml-1 text-[#00DF7C] underline-offset-4 hover:underline"
+                  >
+                    Go to your team →
+                  </Link>
+                </div>
+              ) : pool.isLocked ? (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center text-sm text-white/70">
+                  Entries closed — this fecha has locked. New lineups can
+                  no longer be submitted.
+                  <Link
+                    href={"/leaderboard" as Route}
+                    className="ml-1 text-[#00DF7C] underline-offset-4 hover:underline"
+                  >
+                    See the standings →
+                  </Link>
+                </div>
+              ) : pool.wrongNetwork ? (
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-[#F5C842]/30 bg-[#F5C842]/5 p-4 text-center text-sm text-[#F5C842]">
+                    Your wallet is on the wrong network. Onze runs on Celo
+                    {pool.chainId === 42220 ? " mainnet" : ` (chain ${pool.chainId})`}.
+                  </div>
+                  <PrimaryCTA
+                    label="Switch to Celo"
+                    onClick={() => switchChain({ chainId: pool.chainId })}
+                    loading={switchPending}
+                  />
+                </div>
+              ) : step === "approve" ? (
+                <PrimaryCTA
+                  label="Approve · $1 USDT"
+                  onClick={onApprove}
+                  loading={busy}
+                />
+              ) : (
+                <PrimaryCTA
+                  label="Submit Lineup"
+                  onClick={onJoin}
+                  loading={busy}
+                />
+              )}
+              <p className="mt-3 text-center text-[11px] text-white/40">
+                Two-step: approve once, then submit your lineup on-chain.
+              </p>
+            </section>
+          </div>
+        </div>
       </div>
-      <BottomNav />
-    </main>
+    </AppShell>
   );
 }
