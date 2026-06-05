@@ -32,7 +32,7 @@ export function Sidebar({ active }: { active: NavKey }) {
           );
         })}
       </nav>
-      <div className="px-1"><ConnectedWalletPill /></div>
+      <div className="px-1"><ConnectedWalletPill className="w-full justify-center" /></div>
     </aside>
   );
 }

@@ -98,7 +98,7 @@ export default function ConfirmPage() {
 
   if (!isConnected) {
     return (
-      <AppShell active="home">
+      <AppShell active="home" topbarTitle={<>{getActiveSeason().label} · {fechaLabel(tid)}</>}>
         <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 lg:min-h-[70vh]">
           <p className="text-center text-white/70">
             Connect your wallet to continue.

@@ -74,7 +74,7 @@ export default function ProfilePage() {
   if (!isConnected) {
     return (
       <AppShell active="profile">
-        <div className="mx-auto flex min-h-dvh max-w-[440px] flex-col items-center justify-center gap-4 px-5 pb-24">
+        <div className="mx-auto flex min-h-dvh max-w-[440px] flex-col items-center justify-center gap-4 px-5 pb-24 lg:min-h-[70vh]">
           <Wordmark className="text-3xl lg:hidden" />
           <p className="text-center text-white/70">
             Connect to view your status.
