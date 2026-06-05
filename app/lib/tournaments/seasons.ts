@@ -19,27 +19,20 @@ export type Season = {
   fechas: Fecha[];
 };
 
-// Example config (Premier League 2026/27). Replace tournamentId/round/seasonId
-// with the real on-chain values at deploy time.
+// World Cup 2026 — the only active season. On the fresh Onze factory (Celo mainnet,
+// 0x920A592438582FB2Ee6522Bd769e2Ae2f798C9f6) the Group Stage is tournament #0, the
+// Knockout is tournament #1 (created when the groups end — Phase 7), and the season is
+// SeasonPool #0. The Premier entry was removed: on this factory its ids (seasonId 0 /
+// tournamentId 0,1) collide with the WC and would mis-resolve. Until the Knockout pool
+// is created, tournamentId 1 resolves to a zero address and the builder gates its join.
 export const SEASONS: Season[] = [
   {
     seasonId: 0,
-    label: "Premier League 2026/27",
-    fechas: [
-      { tournamentId: 0, round: 39 },
-      { tournamentId: 1, round: 40 },
-    ],
-  },
-  {
-    seasonId: 1, // PLACEHOLDER — Tanda 5 sets the real SeasonPool id at deploy.
     label: "World Cup 2026",
     provider: "fifa-wc",
-    // tournamentId values are PLACEHOLDERS. Tanda 5 deploys the Onze factory + pools
-    // and replaces these with the real on-chain ids. Until then `useFechaPool` resolves
-    // them to a zero address and the builder gates the join ("not open yet").
     fechas: [
-      { tournamentId: 100, round: 1, rounds: [1, 2, 3], label: "Group Stage", budget: 100 },
-      { tournamentId: 101, round: 4, rounds: [4, 5, 6, 7, 8], label: "Knockout", budget: 105 },
+      { tournamentId: 0, round: 1, rounds: [1, 2, 3], label: "Group Stage", budget: 100 },
+      { tournamentId: 1, round: 4, rounds: [4, 5, 6, 7, 8], label: "Knockout", budget: 105 },
     ],
   },
 ];

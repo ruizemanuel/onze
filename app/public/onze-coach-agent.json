@@ -1,0 +1,26 @@
+{
+  "type": "Agent",
+  "name": "Onze Coach",
+  "description": "AI Coach for Onze — analyzes FIFA World Cup 2026 fantasy data and reveals a full starting XI (11 players + captain) before each phase. Picks are committed onchain (commit-reveal) and accuracy is tracked via ERC-8004 reputation.",
+  "image": "https://onze.vercel.app/opengraph-image",
+  "endpoints": [
+    {
+      "type": "wallet",
+      "address": "0xFb226037b54B8782655B233F2A9590c0cF997f68",
+      "chainId": 42220
+    },
+    {
+      "type": "agent-contract",
+      "address": "0x6fabcf591ea5d106Ea6bbB7BeAf8E0e68785DE40",
+      "chainId": 42220,
+      "description": "OnzeCoachAgent contract storing commit-reveal of each phase's XI and ERC-8004 accuracy reputation"
+    },
+    {
+      "type": "app",
+      "url": "https://onze.vercel.app/coach"
+    }
+  ],
+  "supportedTrust": ["reputation"],
+  "tags": ["fantasy", "world-cup", "football", "celo", "onze"],
+  "version": "1.0.0"
+}

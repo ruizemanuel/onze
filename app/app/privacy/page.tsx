@@ -48,7 +48,7 @@ export default function PrivacyPage() {
               This Privacy Policy describes what information Onze
               (&quot;we&quot;, &quot;us&quot;) collects when you interact with
               our application at{" "}
-              <span className="text-white">pick5-beta.vercel.app</span> and
+              <span className="text-white">onze.vercel.app</span> and
               with the Onze smart contracts on Celo mainnet.
             </p>
           </Section>

@@ -47,7 +47,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://pick5-beta.vercel.app"),
+  metadataBase: new URL("https://onze.vercel.app"),
   title: {
     default: "Onze — On-chain World Cup Fantasy XI",
     template: "%s · Onze",
