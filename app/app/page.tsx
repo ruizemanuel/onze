@@ -68,7 +68,7 @@ function timeUntil(target: Date): string {
 }
 
 const DESKTOP_TICKER = [
-  { kind: "head", text: "MUNDIAL 2026 · 11 JUN → 19 JUL" },
+  { kind: "head", text: "WORLD CUP 2026 · JUN 11 → JUL 19" },
   { kind: "price", html: "<b>$1</b> USDT TO PLAY" },
   { kind: "price", html: "<b>$10</b> + YIELD TO WIN" },
   { kind: "head", text: "WINNER TAKES ALL · NO-LOSS · CELO + AAVE V3" },
@@ -95,7 +95,7 @@ export default async function LandingPage() {
           </div>
           <h1 className="font-display mt-2 text-[44px] leading-[0.95] tracking-tight">
             Build your XI.<br />
-            Win the phase.<br />
+            Win the pool.<br />
             <span className="text-[#00DF7C]">Lose nothing.</span>
           </h1>
           <p className="mt-3 max-w-[34ch] text-sm text-white/60">
@@ -159,8 +159,8 @@ export default async function LandingPage() {
               ONZE
             </div>
             <div className="lp-stamp">
-              <b>MUNDIAL 2026</b>
-              <span>48 equipos · 11-jun → 19-jul</span>
+              <b>WORLD CUP 2026</b>
+              <span>48 teams · Jun 11 → Jul 19</span>
             </div>
             <div aria-hidden />
           </header>
@@ -265,10 +265,10 @@ export default async function LandingPage() {
               <h1 className="lp-h1">
                 <span className="lp-h1-row lp-anim lp-anim-d3">ONZE.</span>
                 <span className="lp-h1-row lp-anim lp-anim-d4">
-                  <span className="lp-h1-pop">GANÁ LA FASE.</span>
+                  <span className="lp-h1-pop">WIN THE POOL.</span>
                 </span>
                 <span className="lp-h1-row lp-anim lp-anim-d5">
-                  <span className="lp-h1-strike">NO PERDÉS NADA.</span>
+                  <span className="lp-h1-strike">LOSE NOTHING.</span>
                 </span>
               </h1>
               <p className="lp-tagline lp-anim lp-anim-d6">
