@@ -5,7 +5,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/design/AppShell";
+import { Wordmark } from "@/components/design/Wordmark";
 import { ConnectedWalletPill } from "@/components/ConnectedWalletPill";
 import { PrimaryCTA } from "@/components/design/PrimaryCTA";
 import { SecondaryCTA } from "@/components/design/SecondaryCTA";
@@ -72,18 +73,15 @@ export default function ProfilePage() {
 
   if (!isConnected) {
     return (
-      <main className="min-h-dvh bg-[#08070D] text-white">
+      <AppShell active="profile">
         <div className="mx-auto flex min-h-dvh max-w-[440px] flex-col items-center justify-center gap-4 px-5 pb-24">
-          <span className="font-display text-3xl tracking-[0.2em] text-white">
-            PICK<span className="text-[#00DF7C]">5</span>
-          </span>
+          <Wordmark className="text-3xl lg:hidden" />
           <p className="text-center text-white/70">
             Connect to view your status.
           </p>
           <ConnectedWalletPill />
         </div>
-        <BottomNav />
-      </main>
+      </AppShell>
     );
   }
 
@@ -129,12 +127,10 @@ export default function ProfilePage() {
   const showWithdraw = pool.hasJoined && pool.isFinalized && !withdrawn;
 
   return (
-    <main className="min-h-dvh bg-[#08070D] text-white">
-      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24">
-        <header className="flex items-center justify-between">
-          <span className="font-display text-2xl tracking-[0.2em] text-white">
-            PICK<span className="text-[#00DF7C]">5</span>
-          </span>
+    <AppShell active="profile">
+      <div className="mx-auto flex max-w-[440px] flex-col px-5 pt-5 pb-24 lg:max-w-2xl lg:px-0 lg:pt-0 lg:pb-0">
+        <header className="flex items-center justify-between lg:hidden">
+          <Wordmark />
           <ConnectedWalletPill />
         </header>
 
@@ -230,8 +226,7 @@ export default function ProfilePage() {
           </div>
         </section>
       </div>
-      <BottomNav />
-    </main>
+    </AppShell>
   );
 }
 
