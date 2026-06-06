@@ -53,12 +53,12 @@ export const metadata: Metadata = {
     template: "%s · Onze",
   },
   description:
-    "Build your World Cup 2026 XI. Win the phase. Lose nothing. Built on Celo with an ERC-8004 verified AI Coach.",
+    "Build your World Cup 2026 XI. Win the pool. Lose nothing. Built on Celo with an ERC-8004 verified AI Coach.",
   applicationName: "Onze",
   openGraph: {
     title: "Onze — On-chain World Cup Fantasy XI",
     description:
-      "Build your World Cup 2026 XI. Win the phase. Lose nothing. Built on Celo with an ERC-8004 verified AI Coach.",
+      "Build your World Cup 2026 XI. Win the pool. Lose nothing. Built on Celo with an ERC-8004 verified AI Coach.",
     siteName: "Onze",
     locale: "en_US",
     type: "website",
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Onze — On-chain World Cup Fantasy XI",
     description:
-      "Build your World Cup 2026 XI. Win the phase. Lose nothing.",
+      "Build your World Cup 2026 XI. Win the pool. Lose nothing.",
   },
   other: {
     // Talent App project domain-ownership verification

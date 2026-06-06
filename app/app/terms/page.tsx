@@ -277,12 +277,12 @@ export default function TermsPage() {
             <p>
               Questions about these Terms? Reach us on Telegram:{" "}
               <a
-                href="https://t.me/pick5_support"
+                href="https://t.me/onze_support"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#00DF7C] underline-offset-4 hover:underline"
               >
-                t.me/pick5_support
+                t.me/onze_support
               </a>
               .
             </p>

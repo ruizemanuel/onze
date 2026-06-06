@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 export const runtime = "nodejs";
 export const alt =
-  "Onze — On-chain World Cup Fantasy XI on Celo. Build your team, win the phase, lose nothing.";
+  "Onze — On-chain World Cup Fantasy XI on Celo. Build your team, win the pool, lose nothing.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -103,7 +103,7 @@ export default async function Image() {
             }}
           >
             <span>Build your XI.</span>
-            <span>Win the phase.</span>
+            <span>Win the pool.</span>
             <span style={{ color: "#00DF7C" }}>Lose nothing.</span>
           </div>
         </div>
