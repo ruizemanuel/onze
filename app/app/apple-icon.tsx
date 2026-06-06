@@ -22,12 +22,13 @@ export default async function AppleIcon() {
           justifyContent: "center",
           color: "#00DF7C",
           fontFamily: "Bebas Neue",
-          fontSize: 170,
+          fontSize: 150,
+          letterSpacing: -6,
           lineHeight: 1,
           paddingTop: 12,
         }}
       >
-        5
+        11
       </div>
     ),
     {

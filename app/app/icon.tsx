@@ -22,13 +22,14 @@ export default async function Icon() {
           justifyContent: "center",
           color: "#00DF7C",
           fontFamily: "Bebas Neue",
-          fontSize: 30,
+          fontSize: 26,
+          letterSpacing: -1,
           lineHeight: 1,
           paddingTop: 2,
           borderRadius: 6,
         }}
       >
-        5
+        11
       </div>
     ),
     {
