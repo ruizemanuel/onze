@@ -1,29 +1,40 @@
-name: Pick5 Cron Jobs
+name: Onze Cron Jobs
+
+# World Cup 2026 — GROUP STAGE crons (tournament #0, FIFA rounds 1-3, season #0).
+# Knockout (mw=4, t=1) + season finalize (s=0) are added when the groups end (Phase 7/8).
+#
+# Times are UTC. Group lock = Jun 11 18:00, group end = Jun 28 06:00.
+# GH Actions cron at top-of-hour routinely runs 20 min–4 h late; finalize-mw is
+# idempotent (submit + finalize, re-runnable), and `gh workflow run cron.yml` fires
+# /api/leaderboard/recompute within ~1-2 min for urgent manual refreshes.
+#
+# NOTE: BASE_URL below is the live prod alias. If the Vercel project is renamed to
+# `onze` / `onze.vercel.app` becomes prod, update BASE_URL (one place) accordingly.
 
 on:
   schedule:
-    # Coach publishes picks
-    - cron: "0 12 14 5 *"   # MW37 publish — 14 May 12:00 UTC
-    - cron: "0 12 21 5 *"   # MW38 publish — 21 May 12:00 UTC
-    # Coach reveals picks — MW37 runs Fri 15 → Tue 19 May, so reveal must
-    # wait until after FPL settles it (~Wed 20). Two attempts for robustness.
-    - cron: "0 12 20 5 *"   # MW37 reveal — 20 May 12:00 UTC
-    - cron: "0 20 20 5 *"   # MW37 reveal retry — 20 May 20:00 UTC
-    - cron: "0 8 25 5 *"    # MW38 reveal — 25 May 08:00 UTC
-    # Oracle finalize + retry
-    - cron: "0 22 24 5 *"   # finalize MW38 — 24 May 22:00 UTC
-    - cron: "0 12 25 5 *"   # retry MW38 — 25 May 12:00 UTC
-    # Daily leaderboard
+    # Coach commits the group XI before lock (hidden until reveal)
+    - cron: "0 12 11 6 *"   # publish-picks mw=1 — Jun 11 12:00 UTC (pre-lock)
+    # Coach reveals after round 1 settles (computes accuracy). Two attempts.
+    - cron: "0 12 14 6 *"   # reveal mw=1 — Jun 14 12:00 UTC
+    - cron: "0 20 14 6 *"   # reveal mw=1 retry — Jun 14 20:00 UTC
+    # Oracle finalizes the group pool after all 3 rounds settle + endTime (Jun 28 06:00)
+    - cron: "0 12 28 6 *"   # finalize-mw t=0 — Jun 28 12:00 UTC (submit + finalize)
+    - cron: "0 12 29 6 *"   # finalize-mw t=0 retry — Jun 29 12:00 UTC
+    # Daily leaderboard recompute (all active-season fechas)
     - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       endpoint:
-        description: 'Endpoint path to hit (e.g. /api/coach/publish-picks?mw=37). Defaults to /api/leaderboard/recompute.'
+        description: 'Endpoint path to hit (e.g. /api/coach/publish-picks?mw=1). Defaults to /api/leaderboard/recompute.'
         required: false
         default: '/api/leaderboard/recompute'
 
 permissions:
   contents: read
+
+env:
+  BASE_URL: "https://pick5-beta.vercel.app"
 
 jobs:
   fire:
@@ -35,13 +46,11 @@ jobs:
           URL="${{ github.event.inputs.endpoint }}"
           if [ -z "$URL" ]; then
             case "${{ github.event.schedule }}" in
-              "0 12 14 5 *") URL="/api/coach/publish-picks?mw=37" ;;
-              "0 12 21 5 *") URL="/api/coach/publish-picks?mw=38" ;;
-              "0 12 20 5 *") URL="/api/coach/reveal?mw=37" ;;
-              "0 20 20 5 *") URL="/api/coach/reveal?mw=37" ;;
-              "0 8 25 5 *")  URL="/api/coach/reveal?mw=38" ;;
-              "0 22 24 5 *") URL="/api/oracle/finalize-mw?mw=38" ;;
-              "0 12 25 5 *") URL="/api/oracle/retry?mw=38" ;;
+              "0 12 11 6 *") URL="/api/coach/publish-picks?mw=1" ;;
+              "0 12 14 6 *") URL="/api/coach/reveal?mw=1" ;;
+              "0 20 14 6 *") URL="/api/coach/reveal?mw=1" ;;
+              "0 12 28 6 *") URL="/api/oracle/finalize-mw?t=0" ;;
+              "0 12 29 6 *") URL="/api/oracle/retry?t=0" ;;
               "0 0 * * *")   URL="/api/leaderboard/recompute" ;;
               *)             URL="/api/leaderboard/recompute" ;;
             esac
@@ -55,4 +64,4 @@ jobs:
         run: |
           curl -fsS \
             -H "Authorization: Bearer $CRON_SECRET" \
-            "https://pick5-beta.vercel.app${{ steps.endpoint.outputs.url }}"
+            "${BASE_URL}${{ steps.endpoint.outputs.url }}"
