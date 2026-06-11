@@ -11,7 +11,7 @@
     },
     {
       "type": "agent-contract",
-      "address": "0x3A27a7393ab8Ba27C5Aa0d897E96120E9639173a",
+      "address": "0xe93Caa4e4d8cbAAb6264364762c478b1A10C9220",
       "chainId": 42220,
       "description": "OnzeCoachAgent contract storing commit-reveal of each phase's XI and ERC-8004 accuracy reputation"
     },
