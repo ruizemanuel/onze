@@ -175,7 +175,7 @@ export default function ConfirmPage() {
             Confirm Lineup
           </h1>
           <p className="mt-2 text-sm text-white/50">
-            Review your XI and captain.
+            Review your XI. Your captain (C) scores 2× points.
           </p>
         </section>
 

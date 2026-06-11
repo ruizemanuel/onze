@@ -93,7 +93,7 @@ export function PlayerPoolContent({
               <span className="flex size-4 items-center justify-center rounded-full bg-[#F5C842] text-[9px] font-bold text-black">
                 C
               </span>
-              Make captain
+              Make captain · 2× points
             </button>
           )}
           {onClear && (

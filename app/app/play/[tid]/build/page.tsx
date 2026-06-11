@@ -328,7 +328,7 @@ export default function BuildPage() {
                   <span className="flex size-5 items-center justify-center rounded-full bg-[#F5C842] text-[11px] font-bold text-black">
                     C
                   </span>
-                  Tap a player to set your captain
+                  Tap a player to set your captain — they score 2× points
                 </div>
               )}
               <PrimaryCTA
