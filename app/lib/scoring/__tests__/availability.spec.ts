@@ -37,6 +37,14 @@ describe("filterAvailable", () => {
     expect(out.map((p) => p.id)).toEqual([1]);
   });
 
+  it("keeps FIFA World Cup players (status 'playing')", () => {
+    const out = filterAvailable([
+      player({ id: 1, status: "playing" }),
+      player({ id: 2, status: "transferred" }), // not called up -> excluded
+    ]);
+    expect(out.map((p) => p.id)).toEqual([1]);
+  });
+
   it("drops players below the 75% chance gate (this or next round)", () => {
     const out = filterAvailable([
       player({ id: 1, chanceThisRound: 100, chanceNextRound: 100 }),
