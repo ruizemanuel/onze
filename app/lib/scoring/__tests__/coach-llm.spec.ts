@@ -39,6 +39,9 @@ function pick(id: number) {
 
 beforeEach(() => {
   vi.mocked(generateObject).mockReset();
+  // Force the gateway (mocked generateObject) path: without an OpenRouter key the
+  // primary path throws before any fetch, so generateCoachPicks falls through.
+  delete process.env.OPENROUTER_API_KEY;
 });
 
 describe("generateCoachPicks output validation (XI enforcement)", () => {
