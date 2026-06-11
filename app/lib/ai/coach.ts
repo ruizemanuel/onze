@@ -56,12 +56,16 @@ const PICKS_JSON_SCHEMA = {
  * form × ownership ÷ cost. Exported so it can be unit-tested without the LLM call.
  */
 export function rankCandidates(players: ProviderPlayer[]): ProviderPlayer[] {
+  // (form + 1) keeps the score meaningful PRE-tournament, when every player's form
+  // is 0 — otherwise the product collapses to 0 for everyone and the "top 50" just
+  // becomes the feed's order (grouped by squad → the LLM only ever sees the first
+  // 1-2 teams). Ownership diversifies across nations (the most-selected players are
+  // the stars), value (÷cost) keeps it budget-aware, and form amplifies once matches
+  // are played.
+  const score = (p: ProviderPlayer) =>
+    ((p.form + 1) * p.owned) / Math.max(p.cost, 0.1);
   return filterAvailable(players)
-    .sort(
-      (a, b) =>
-        (b.form * b.owned) / Math.max(b.cost, 0.1) -
-        (a.form * a.owned) / Math.max(a.cost, 0.1),
-    )
+    .sort((a, b) => score(b) - score(a))
     .slice(0, 50);
 }
 

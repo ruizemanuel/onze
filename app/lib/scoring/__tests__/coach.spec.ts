@@ -38,6 +38,17 @@ describe("rankCandidates", () => {
     expect(ids).toEqual([4, 5]); // sorted by form×owned/cost desc
   });
 
+  it("pre-tournament (form all 0) still ranks by ownership/value, not feed order", () => {
+    // form=0 for everyone (no matches played). The old form×owned/cost score
+    // collapsed to 0 → degenerate feed order. Now ownership/value must drive it.
+    const pool = [
+      player({ id: 1, form: 0, owned: 2, cost: 5 }),
+      player({ id: 2, form: 0, owned: 50, cost: 5 }), // most-owned -> first
+      player({ id: 3, form: 0, owned: 10, cost: 5 }),
+    ];
+    expect(rankCandidates(pool).map((p) => p.id)).toEqual([2, 3, 1]);
+  });
+
   it("caps the candidate pool at 50", () => {
     const pool = Array.from({ length: 80 }, (_, i) =>
       player({ id: i + 1, form: i + 1 }),
