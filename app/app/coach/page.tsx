@@ -14,10 +14,6 @@ export const dynamic = "force-dynamic";
 // On-chain trust identifiers — registered on Celo mainnet.
 const ERC8004_IDENTITY_REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432";
 const COACH_AGENT_ID = process.env.NEXT_PUBLIC_COACH_AGENT_ID ?? "9056";
-const SELF_AGENT_ID = process.env.NEXT_PUBLIC_SELF_AGENT_ID ?? "104";
-const SELF_AGENT_ADDRESS =
-  process.env.NEXT_PUBLIC_SELF_AGENT_ADDRESS ??
-  "0x6AfE4e694613A06cCb6cc22178feDA0E3EE1Cc10";
 
 type PlayerSummary = {
   name: string;
@@ -107,14 +103,6 @@ export default async function CoachPage() {
                   className="underline-offset-2 hover:text-[#00DF7C] hover:underline"
                 >
                   ERC-8004 #{COACH_AGENT_ID}
-                </a>
-                <a
-                  href={`https://celoscan.io/address/${SELF_AGENT_ADDRESS}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline-offset-2 hover:text-[#00DF7C] hover:underline"
-                >
-                  Self ID #{SELF_AGENT_ID}
                 </a>
               </div>
             </div>
