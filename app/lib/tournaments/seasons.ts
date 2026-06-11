@@ -105,6 +105,17 @@ export function fechaBudget(tournamentId: number): number {
   return 100;
 }
 
+/** The squad budget (in millions) for a phase by its PRIMARY round (mw). Used by
+ * the coach, which works in rounds (mw=1 group / mw=4 knockout), not tournamentIds.
+ * Defaults to 100. */
+export function roundBudget(round: number): number {
+  for (const s of SEASONS) {
+    const f = s.fechas.find((x) => x.round === round);
+    if (f) return f.budget ?? 100;
+  }
+  return 100;
+}
+
 /** The human label for a fecha/phase, falling back to `GW{round}`. */
 export function fechaLabel(tournamentId: number): string {
   for (const s of SEASONS) {

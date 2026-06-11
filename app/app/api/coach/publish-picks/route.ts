@@ -17,7 +17,7 @@ import { fallbackPicks } from "@/lib/ai/fallback";
 import { onzeCoachAgentAbi } from "@/lib/contracts/abi";
 import { PICKS_COUNT } from "@/lib/ai/coach";
 import { coachAddress, DEFAULT_NETWORK } from "@/lib/contracts/addresses";
-import { isConfiguredRound } from "@/lib/tournaments/seasons";
+import { isConfiguredRound, roundBudget } from "@/lib/tournaments/seasons";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -48,13 +48,14 @@ export async function GET(req: NextRequest) {
   }
 
   const players = await getActiveProvider().getPlayers();
+  const budget = roundBudget(mw); // 100M group / 105M knockout
 
   let picks;
   try {
-    picks = await generateCoachPicks(mw, players);
+    picks = await generateCoachPicks(mw, players, budget);
   } catch (e) {
     console.error("LLM failed, using fallback", e);
-    picks = fallbackPicks(players);
+    picks = fallbackPicks(players, budget);
   }
 
   const playerIds = picks.picks.map((p) => p.playerId);

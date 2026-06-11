@@ -7,61 +7,45 @@ import { filterAvailable } from "@/lib/scoring/availability";
 /** The Onze XI: 11 distinct players. */
 export const PICKS_COUNT = 11;
 
-// Primary: OpenRouter's free gpt-oss-120b (OpenAI open-weight, strong + free).
-// Fallback: gemini-2.5-flash via the Vercel AI Gateway (reliable free). Both are
-// free; the route falls back to rule-based picks only if BOTH fail.
-const OPENROUTER_MODEL = "openai/gpt-oss-120b:free";
+// gemini-2.5-flash via the Vercel AI Gateway (free + reliable). We tried OpenRouter's
+// free gpt-oss-120b but it mis-assigns positions / routes to flaky providers, so it
+// couldn't reliably produce a legal formation. If the model call fails the route
+// falls back to deterministic rule-based picks.
 const GATEWAY_MODEL = "google/gemini-2.5-flash";
 
-export const PicksSchema = z.object({
-  picks: z
-    .array(
-      z.object({
-        playerId: z.number().int().min(1).max(65535),
-        playerName: z.string(),
-        reasoning: z.string().min(20).max(300),
-      }),
-    )
-    .length(PICKS_COUNT),
+// The coach plays a fixed 4-3-3. Emitting the XI as POSITION LINES lets the
+// structured-output schema enforce the per-line counts, so the model can't return
+// an illegal shape (given a free choice models tend to over-stack forwards).
+const FORMATION = { GK: 1, DEF: 4, MID: 3, FWD: 3 } as const;
+
+const Pick = z.object({
+  playerId: z.number().int().min(1).max(65535),
+  playerName: z.string(),
+  reasoning: z.string().min(20).max(300),
 });
 
-export type CoachPicks = z.infer<typeof PicksSchema>;
+/** What the LLM returns: one player line per position (counts = the 4-3-3). */
+export const XISchema = z.object({
+  gk: z.array(Pick).length(FORMATION.GK),
+  def: z.array(Pick).length(FORMATION.DEF),
+  mid: z.array(Pick).length(FORMATION.MID),
+  fwd: z.array(Pick).length(FORMATION.FWD),
+});
+type LlmXI = z.infer<typeof XISchema>;
 
-// JSON Schema mirror of PicksSchema for OpenRouter structured outputs (strict).
-const PICKS_JSON_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["picks"],
-  properties: {
-    picks: {
-      type: "array",
-      minItems: PICKS_COUNT,
-      maxItems: PICKS_COUNT,
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["playerId", "playerName", "reasoning"],
-        properties: {
-          playerId: { type: "integer" },
-          playerName: { type: "string" },
-          reasoning: { type: "string" },
-        },
-      },
-    },
-  },
-};
+/** Flattened result consumed by the rest of the pipeline. */
+export const PicksSchema = z.object({ picks: z.array(Pick).length(PICKS_COUNT) });
+export type CoachPicks = z.infer<typeof PicksSchema>;
 
 /**
  * Pure: drop unavailable players, then take the top-50 candidates by
- * form × ownership ÷ cost. Exported so it can be unit-tested without the LLM call.
+ * (form + 1) × ownership ÷ cost. The (form + 1) keeps the score meaningful
+ * PRE-tournament, when every player's form is 0 — otherwise the product collapses
+ * to 0 for everyone and the "top 50" just becomes the feed's order (grouped by
+ * squad → the LLM only ever sees the first 1-2 teams). Ownership diversifies across
+ * nations, value (÷cost) keeps it budget-aware, form amplifies once matches play.
  */
 export function rankCandidates(players: ProviderPlayer[]): ProviderPlayer[] {
-  // (form + 1) keeps the score meaningful PRE-tournament, when every player's form
-  // is 0 — otherwise the product collapses to 0 for everyone and the "top 50" just
-  // becomes the feed's order (grouped by squad → the LLM only ever sees the first
-  // 1-2 teams). Ownership diversifies across nations (the most-selected players are
-  // the stars), value (÷cost) keeps it budget-aware, and form amplifies once matches
-  // are played.
   const score = (p: ProviderPlayer) =>
     ((p.form + 1) * p.owned) / Math.max(p.cost, 0.1);
   return filterAvailable(players)
@@ -69,59 +53,32 @@ export function rankCandidates(players: ProviderPlayer[]): ProviderPlayer[] {
     .slice(0, 50);
 }
 
-function buildPrompt(mw: number, topPlayers: unknown[]): string {
+function buildPrompt(
+  mw: number,
+  topPlayers: { id: number; position: string }[],
+  budget: number,
+): string {
   return `You are an expert fantasy football analyst picking a World Cup XI for round ${mw}.
-Pick the ${PICKS_COUNT} players most likely to deliver high points. All ${PICKS_COUNT} must be DISTINCT player IDs.
-Consider: recent form, fixture difficulty, ownership, and value.
-Every candidate below has already been confirmed available to play — do not worry about injuries or suspensions.
+Build a 4-3-3: exactly 1 goalkeeper (gk), 4 defenders (def), 3 midfielders (mid), 3 forwards (fwd) — 11 DISTINCT players.
+Put each player in the line that matches their listed position (a GK in "gk", a DEF in "def", etc.).
+The total cost of all 11 picks must be AT MOST ${budget}M (each candidate's "cost" is in M).
+Pick the highest-upside players for each line considering form, ownership, value and fixtures. Every candidate is confirmed available.
 
-Top 50 candidates (sorted by form × ownership ÷ cost):
+Candidates (id, name, team, position, cost, form, owned):
 ${JSON.stringify(topPlayers, null, 2)}
 
-Output the ${PICKS_COUNT} best picks with their playerId, playerName, and a 1-2 sentence reasoning each.`;
+Return gk (1), def (4), mid (3), fwd (3), each pick with playerId, playerName and a 1-2 sentence reasoning.`;
 }
 
-/** Primary path: OpenRouter (OpenAI-compatible) with strict json_schema output. */
-async function picksViaOpenRouter(prompt: string): Promise<CoachPicks> {
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) throw new Error("OPENROUTER_API_KEY not set");
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: OPENROUTER_MODEL,
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "picks", strict: true, schema: PICKS_JSON_SCHEMA },
-      },
-      messages: [{ role: "user", content: prompt }],
-    }),
-    // Tight timeout: the whole route runs in a 60s function. OpenRouter's free
-    // tier can hang, so fail fast and let the gateway fallback finish in budget.
-    signal: AbortSignal.timeout(14000),
-  });
-  if (!res.ok) {
-    throw new Error(`OpenRouter ${res.status}: ${(await res.text()).slice(0, 160)}`);
-  }
-  const json = await res.json();
-  const content = json?.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenRouter returned empty content");
-  return PicksSchema.parse(JSON.parse(content));
-}
-
-/** Fallback path: Vercel AI Gateway (gemini-2.5-flash) via the AI SDK. */
-async function picksViaGateway(prompt: string): Promise<CoachPicks> {
-  const result = await generateObject({
-    model: gateway(GATEWAY_MODEL),
-    schema: PicksSchema,
-    prompt,
-  });
+async function generateXI(prompt: string): Promise<LlmXI> {
+  const result = await generateObject({ model: gateway(GATEWAY_MODEL), schema: XISchema, prompt });
   return result.object;
 }
 
 export async function generateCoachPicks(
   mw: number,
   players: ProviderPlayer[],
+  budget?: number,
 ): Promise<CoachPicks> {
   const topPlayers = rankCandidates(players).map((p) => ({
     id: p.id,
@@ -133,23 +90,27 @@ export async function generateCoachPicks(
     owned: p.owned,
     total_points: p.totalPoints,
   }));
-  const prompt = buildPrompt(mw, topPlayers);
+  const prompt = buildPrompt(mw, topPlayers, budget ?? Infinity);
 
-  let picks: CoachPicks;
-  try {
-    picks = await picksViaOpenRouter(prompt);
-  } catch (e) {
-    console.warn("OpenRouter coach failed, falling back to gateway:", e instanceof Error ? e.message : e);
-    picks = await picksViaGateway(prompt);
+  const xi = await generateXI(prompt);
+
+  const meta = new Map(topPlayers.map((p) => [p.id, p]));
+  // Every pick must be in the pool AND sit in the line matching its real position
+  // (the schema fixes the counts; this guarantees a legal 4-3-3 of real players).
+  for (const [key, pos] of [["gk", "GK"], ["def", "DEF"], ["mid", "MID"], ["fwd", "FWD"]] as const) {
+    for (const pk of xi[key]) {
+      const m = meta.get(pk.playerId);
+      if (!m) throw new Error("LLM returned a player outside the available candidate pool");
+      if (m.position !== pos) throw new Error(`LLM put a ${m.position} in the ${pos} line`);
+    }
   }
 
-  // Validate distinct IDs
-  const ids = new Set(picks.picks.map((p) => p.playerId));
-  if (ids.size !== PICKS_COUNT) throw new Error("LLM returned duplicate player IDs");
-  // Enforce: every pick must be inside the filtered candidate pool. A hallucinated
-  // id for an unavailable player would otherwise be committed on-chain.
-  const allowed = new Set(topPlayers.map((p) => p.id));
-  if (picks.picks.some((p) => !allowed.has(p.playerId)))
-    throw new Error("LLM returned a player outside the available candidate pool");
-  return picks;
+  const picks = [...xi.gk, ...xi.def, ...xi.mid, ...xi.fwd];
+  if (new Set(picks.map((p) => p.playerId)).size !== PICKS_COUNT)
+    throw new Error("LLM returned duplicate player IDs");
+  if (budget != null) {
+    const spent = picks.reduce((s, p) => s + (meta.get(p.playerId)?.cost ?? 0), 0);
+    if (spent > budget) throw new Error(`LLM XI over budget (${spent.toFixed(1)}/${budget}M)`);
+  }
+  return { picks };
 }

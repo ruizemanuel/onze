@@ -58,15 +58,24 @@ describe("rankCandidates", () => {
 });
 
 describe("fallbackPicks", () => {
-  it("never returns an unavailable player and returns a full XI", () => {
+  it("builds a valid 4-3-3 within budget, never an unavailable player", () => {
+    const mk = (id: number, position: ProviderPlayer["position"], cost: number) =>
+      player({ id, status: "a", position, cost, form: 0, owned: 10 });
     const pool = [
-      player({ id: 1, status: "i", form: 9, owned: 60, cost: 5 }), // injured -> excluded
-      ...Array.from({ length: 12 }, (_, i) =>
-        player({ id: i + 2, status: "a", form: 12 - i, owned: 40 - i, cost: 6 }),
-      ),
+      player({ id: 99, status: "i", position: "FWD", cost: 4 }), // injured -> excluded
+      mk(1, "GK", 5), mk(2, "GK", 5),
+      ...[3, 4, 5, 6, 7].map((id) => mk(id, "DEF", 5)),
+      ...[8, 9, 10, 11, 12].map((id) => mk(id, "MID", 6)),
+      ...[13, 14, 15, 16].map((id) => mk(id, "FWD", 7)),
     ];
-    const ids = fallbackPicks(pool).picks.map((p) => p.playerId);
-    expect(ids).not.toContain(1);
+    const ids = fallbackPicks(pool, 100).picks.map((p) => p.playerId);
     expect(ids).toHaveLength(11);
+    expect(ids).not.toContain(99);
+    const byId = new Map(pool.map((p) => [p.id, p]));
+    const c = { GK: 0, DEF: 0, MID: 0, FWD: 0 };
+    for (const id of ids) c[byId.get(id)!.position as keyof typeof c]++;
+    expect(c).toEqual({ GK: 1, DEF: 4, MID: 3, FWD: 3 });
+    const spent = ids.reduce((s, id) => s + byId.get(id)!.cost, 0);
+    expect(spent).toBeLessThanOrEqual(100);
   });
 });
