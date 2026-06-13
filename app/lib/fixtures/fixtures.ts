@@ -10,12 +10,15 @@ export type Side = {
   penalties: number | null;
 };
 
+export type MatchGoal = { side: "home" | "away"; scorerId: number; assistId: number | null };
+
 export type Match = {
   id: number;
   kickoff: string; // ISO from FIFA `date`
   status: MatchStatus;
   home: Side;
   away: Side;
+  goals: MatchGoal[];
 };
 
 export type RoundFixtures = {
@@ -55,6 +58,12 @@ export function matchStatus(m: FifaMatch): MatchStatus {
   return "live"; // genuinely in-play (status/period are mid-match values)
 }
 
+function goalsOf(m: FifaMatch): MatchGoal[] {
+  const fromSide = (arr: { playerId: number; assistId: number | null }[] | null, side: "home" | "away"): MatchGoal[] =>
+    (arr ?? []).map((g) => ({ side, scorerId: g.playerId, assistId: g.assistId ?? null }));
+  return [...fromSide(m.homeGoalScorersAssists, "home"), ...fromSide(m.awayGoalScorersAssists, "away")];
+}
+
 export function mapMatch(m: FifaMatch): Match {
   return {
     id: m.id,
@@ -62,6 +71,7 @@ export function mapMatch(m: FifaMatch): Match {
     status: matchStatus(m),
     home: { squadId: m.homeSquadId, name: m.homeSquadName, abbr: m.homeSquadAbbr, score: m.homeScore, penalties: m.homePenaltyScore },
     away: { squadId: m.awaySquadId, name: m.awaySquadName, abbr: m.awaySquadAbbr, score: m.awayScore, penalties: m.awayPenaltyScore },
+    goals: goalsOf(m),
   };
 }
 

@@ -132,3 +132,20 @@ describe("groupMatchesByDay", () => {
     expect(grouped[1].matches).toHaveLength(1);
   });
 });
+
+describe("mapMatch goals", () => {
+  it("maps home then away goal scorers with side + assist", () => {
+    const m = mapMatch(fifaMatch({
+      homeGoalScorersAssists: [{ playerId: 100, assistId: 200 }, { playerId: 101, assistId: null }],
+      awayGoalScorersAssists: [{ playerId: 300, assistId: 301 }],
+    }));
+    expect(m.goals).toEqual([
+      { side: "home", scorerId: 100, assistId: 200 },
+      { side: "home", scorerId: 101, assistId: null },
+      { side: "away", scorerId: 300, assistId: 301 },
+    ]);
+  });
+  it("defaults to no goals when the feed arrays are null", () => {
+    expect(mapMatch(fifaMatch({})).goals).toEqual([]);
+  });
+});

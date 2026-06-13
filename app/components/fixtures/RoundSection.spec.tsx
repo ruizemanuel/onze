@@ -16,7 +16,8 @@ const groupRound: RoundFixtures = {
   matches: [
     { id: 1, kickoff: "2026-06-11T20:00:00+01:00", status: "finished",
       home: { squadId: 28, name: "Mexico", abbr: "MEX", score: 2, penalties: 0 },
-      away: { squadId: 40, name: "South Africa", abbr: "RSA", score: 0, penalties: 0 } },
+      away: { squadId: 40, name: "South Africa", abbr: "RSA", score: 0, penalties: 0 },
+      goals: [] },
   ],
 };
 

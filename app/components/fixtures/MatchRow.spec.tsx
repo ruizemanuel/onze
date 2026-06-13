@@ -16,6 +16,7 @@ function match(over: Partial<Match> = {}): Match {
     status: "upcoming",
     home: { squadId: 28, name: "Mexico", abbr: "MEX", score: null, penalties: null },
     away: { squadId: 40, name: "South Africa", abbr: "RSA", score: null, penalties: null },
+    goals: [],
     ...over,
   };
 }
