@@ -12,7 +12,7 @@ vi.mock("next/image", () => ({
 
 function match(over: Partial<Match> = {}): Match {
   return {
-    id: 1, kickoff: "2026-06-11T20:00:00+01:00", venue: "Estadio Banorte, Mexico City",
+    id: 1, kickoff: "2026-06-11T20:00:00+01:00",
     status: "upcoming",
     home: { squadId: 28, name: "Mexico", abbr: "MEX", score: null, penalties: null },
     away: { squadId: 40, name: "South Africa", abbr: "RSA", score: null, penalties: null },

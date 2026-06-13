@@ -9,7 +9,6 @@ export function RoundSection({ round, defaultOpen }: { round: RoundFixtures; def
   const [open, setOpen] = useState(defaultOpen);
   const range =
     round.startDate && round.endDate ? `${shortDate(round.startDate)} – ${shortDate(round.endDate)}` : "";
-  const days = groupMatchesByDay(round.matches);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
@@ -35,7 +34,7 @@ export function RoundSection({ round, defaultOpen }: { round: RoundFixtures; def
           {round.matches.length === 0 ? (
             <p className="px-1 py-6 text-center text-sm text-white/40">Bracket set after the group stage.</p>
           ) : (
-            days.map(({ day, matches }) => (
+            groupMatchesByDay(round.matches).map(({ day, matches }) => (
               <div key={day} className="pt-3">
                 <h3 className="px-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/35">
                   {shortDate(day)}

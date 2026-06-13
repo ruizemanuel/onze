@@ -4,6 +4,7 @@ import type { RoundFixtures } from "@/lib/fixtures/fixtures";
 
 async function fetchFixtures(): Promise<RoundFixtures[]> {
   const r = await fetch("/api/fixtures");
+  if (!r.ok) return [];
   const d = (await r.json()) as { rounds?: RoundFixtures[] };
   return d.rounds ?? [];
 }

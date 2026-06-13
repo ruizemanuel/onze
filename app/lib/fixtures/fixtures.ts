@@ -13,7 +13,6 @@ export type Side = {
 export type Match = {
   id: number;
   kickoff: string; // ISO from FIFA `date`
-  venue: string;
   status: MatchStatus;
   home: Side;
   away: Side;
@@ -51,21 +50,15 @@ export function shortDate(iso?: string): string {
 }
 
 export function matchStatus(m: FifaMatch): MatchStatus {
-  if (m.status === "complete") return "finished";
-  if (m.status === "scheduled") return "upcoming";
-  return "live"; // any in-play status
-}
-
-function venueOf(m: FifaMatch): string {
-  if (m.venueName && m.venueCity) return `${m.venueName}, ${m.venueCity}`;
-  return m.venueCity ?? m.venueName ?? "";
+  if (m.status === "complete" || m.period === "full_time") return "finished";
+  if (m.status === "scheduled" || m.period === "pre_match") return "upcoming";
+  return "live"; // genuinely in-play (status/period are mid-match values)
 }
 
 export function mapMatch(m: FifaMatch): Match {
   return {
     id: m.id,
     kickoff: m.date,
-    venue: venueOf(m),
     status: matchStatus(m),
     home: { squadId: m.homeSquadId, name: m.homeSquadName, abbr: m.homeSquadAbbr, score: m.homeScore, penalties: m.homePenaltyScore },
     away: { squadId: m.awaySquadId, name: m.awaySquadName, abbr: m.awaySquadAbbr, score: m.awayScore, penalties: m.awayPenaltyScore },
@@ -107,5 +100,10 @@ export function groupMatchesByDay(matches: Match[]): { day: string; matches: Mat
     if (list) list.push(m);
     else map.set(day, [m]);
   }
-  return [...map.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([day, matches]) => ({ day, matches }));
+  return [...map.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, matches]) => ({
+      day,
+      matches: [...matches].sort((x, y) => x.kickoff.localeCompare(y.kickoff)),
+    }));
 }

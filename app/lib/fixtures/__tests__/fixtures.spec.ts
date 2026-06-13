@@ -56,8 +56,11 @@ describe("mapMatch", () => {
   it("derives 'live' from any other (in-play) status", () => {
     expect(mapMatch(fifaMatch({ status: "playing", period: "first_half" })).status).toBe("live");
   });
-  it("formats venue as 'Venue, City'", () => {
-    expect(mapMatch(fifaMatch({})).venue).toBe("Estadio Banorte, Mexico City");
+  it("treats period full_time as finished even if status is an unexpected string", () => {
+    expect(mapMatch(fifaMatch({ status: "ended", period: "full_time", homeScore: 1, awayScore: 0 })).status).toBe("finished");
+  });
+  it("treats period pre_match as upcoming even if status is an unexpected string", () => {
+    expect(mapMatch(fifaMatch({ status: "tbd", period: "pre_match" })).status).toBe("upcoming");
   });
   it("carries penalty scores for KO matches", () => {
     const m = mapMatch(fifaMatch({ status: "complete", homeScore: 1, awayScore: 1, homePenaltyScore: 4, awayPenaltyScore: 3 }));
