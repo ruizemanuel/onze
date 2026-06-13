@@ -31,7 +31,7 @@ export function RoundSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-white/[0.03]"
+        className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-left transition hover:bg-white/[0.03]"
       >
         <span className="flex items-baseline gap-2">
           <span className="text-sm font-semibold text-white">{round.stageLabel}</span>
