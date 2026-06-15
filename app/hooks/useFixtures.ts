@@ -14,7 +14,7 @@ export function useFixtures() {
     queryKey: ["fixtures"],
     queryFn: fetchFixtures,
     refetchInterval: 60_000,
-    staleTime: 30_000,
+    staleTime: 0, // always refetch on mount → /fixtures is fresh on every entry
   });
   return { rounds: data ?? [], isLoading };
 }

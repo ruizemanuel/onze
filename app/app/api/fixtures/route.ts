@@ -3,11 +3,11 @@ import { getFifaRounds } from "@/lib/worldcup/client";
 import { mapRounds } from "@/lib/fixtures/fixtures";
 
 export const runtime = "nodejs";
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rounds = mapRounds(await getFifaRounds(60));
+    const rounds = mapRounds(await getFifaRounds(0));
     return NextResponse.json({ rounds });
   } catch (e) {
     console.error("fixtures endpoint failed", e);

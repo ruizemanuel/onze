@@ -69,7 +69,13 @@ export type FifaRound = {
 };
 
 async function getJson<T>(path: string, revalidate: number): Promise<T> {
-  const r = await fetch(`${FIFA}/${path}`, { next: { revalidate } });
+  // revalidate > 0 → Next Data Cache (stale-while-revalidate). revalidate <= 0 →
+  // no cache: fetch fresh every request (used by the fixtures route so /fixtures is
+  // never served stale on entry).
+  const r = await fetch(
+    `${FIFA}/${path}`,
+    revalidate > 0 ? { next: { revalidate } } : { cache: "no-store" },
+  );
   if (!r.ok) throw new Error(`FIFA ${path} ${r.status}`);
   return (await r.json()) as T;
 }
