@@ -104,12 +104,14 @@ export function MatchRow({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full cursor-pointer items-center gap-3 px-3 py-2.5 text-left transition hover:bg-white/[0.03]"
+        className="relative flex w-full cursor-pointer items-center gap-3 px-3 py-2.5 text-left transition hover:bg-white/[0.03]"
       >
         {inner}
+        {/* Absolutely positioned so the chevron never participates in the home|center|away
+            flex distribution — keeps expandable and non-expandable rows perfectly aligned. */}
         <IconChevronDown
           size={16}
-          className={"shrink-0 text-white/30 transition " + (open ? "rotate-180" : "")}
+          className={"pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/30 transition " + (open ? "rotate-180" : "")}
           aria-hidden
         />
       </button>
