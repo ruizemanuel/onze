@@ -101,6 +101,32 @@ export function currentRoundIndex(rounds: RoundFixtures[]): number {
   return 0;
 }
 
+/** Aggregate goals (by scorer) and assists (by assister) per player across the given
+ * phase rounds, from the mapped fixtures. Powers the team-view per-player overlay
+ * (the FIFA fantasy feed has no per-player goals/assists; the match feed does). */
+export function aggregatePlayerGoals(
+  rounds: RoundFixtures[],
+  phaseRounds: number[],
+): Map<number, { goals: number; assists: number }> {
+  const want = new Set(phaseRounds);
+  const out = new Map<number, { goals: number; assists: number }>();
+  const bump = (id: number, key: "goals" | "assists") => {
+    const e = out.get(id) ?? { goals: 0, assists: 0 };
+    e[key] += 1;
+    out.set(id, e);
+  };
+  for (const r of rounds) {
+    if (!want.has(r.round)) continue;
+    for (const m of r.matches) {
+      for (const g of m.goals) {
+        bump(g.scorerId, "goals");
+        if (g.assistId != null) bump(g.assistId, "assists");
+      }
+    }
+  }
+  return out;
+}
+
 /** Group a round's matches by FIFA calendar day (date portion), sorted ascending. */
 export function groupMatchesByDay(matches: Match[]): { day: string; matches: Match[] }[] {
   const map = new Map<string, Match[]>();

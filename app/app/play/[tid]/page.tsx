@@ -15,7 +15,7 @@ import { Stat } from "@/components/design/Stat";
 import { useFechaPool } from "@/hooks/useFechaPool";
 import { useLineup } from "@/hooks/useLineup";
 import { usePool } from "@/hooks/usePool";
-import { fechaLabel, fechaRound, getActiveSeason, seasonProvider } from "@/lib/tournaments/seasons";
+import { fechaLabel, getActiveSeason } from "@/lib/tournaments/seasons";
 import type { UiPlayer } from "@/lib/players/uiPlayer";
 import { Wordmark } from "@/components/design/Wordmark";
 import { formationLayout, inferFormation } from "@/lib/lineup/formations";
@@ -25,7 +25,7 @@ type LiveStats = {
   mw: number;
   stats: Record<
     number,
-    { points: number; minutes: number; goals: number; assists: number }
+    { points: number; minutes?: number; goals: number; assists: number }
   >;
 };
 
@@ -48,11 +48,6 @@ function partsBetween(target: Date, now: Date) {
 export default function MyTeamPage() {
   const params = useParams<{ tid: string }>();
   const tid = Number(params.tid);
-  const round = fechaRound(tid);
-  // The per-player live overlay uses the FPL live feed; only fetch it when the active
-  // season's provider is FPL. For the World Cup (no live feed in v1) `live` stays null
-  // so the team-view shows the final/cached score and never reads FPL-shaped data.
-  const liveEnabled = seasonProvider(getActiveSeason()) === "fpl";
   const { poolAddr, isLoading: poolLoading } = useFechaPool(tid);
   const { address, isConnected } = useAccount();
   const { lineup, captainId, refetch: refetchLineup } = useLineup(poolAddr);
@@ -87,15 +82,16 @@ export default function MyTeamPage() {
   }, []);
 
   useEffect(() => {
-    if (round === undefined || !liveEnabled) {
+    if (!Number.isInteger(tid)) {
       setLive(null);
       return;
     }
-    fetch(`/api/fpl/live?mw=${round}`)
+    // Per-player phase stats (points + goals/assists) for THIS fecha, provider-agnostic.
+    fetch(`/api/scores/live?t=${tid}`)
       .then((r) => r.json())
       .then((d: LiveStats) => setLive(d))
       .catch(() => setLive(null));
-  }, [round, liveEnabled]);
+  }, [tid]);
 
   useEffect(() => {
     if (!address || !Number.isInteger(tid)) {
@@ -195,7 +191,7 @@ export default function MyTeamPage() {
 
   // `me.total` is THIS fecha's cron-cached, post-settlement points (scoped by ?t=);
   // it stays 0 while the fecha is mid-flight, so during a live fecha we fall back to
-  // the FPL live feed for this round.
+  // the live per-player phase points (currentMwPoints).
   const cachedTotal = me?.total ?? 0;
   const totalScore = cachedTotal > 0 ? cachedTotal : currentMwPoints;
 
@@ -403,18 +399,17 @@ export default function MyTeamPage() {
                     {ids.map((id, i) => {
                       const p = playerMap.get(id);
                       const pts = live?.stats?.[id]?.points ?? 0;
-                      const mins = live?.stats?.[id]?.minutes ?? 0;
                       const goals = live?.stats?.[id]?.goals ?? 0;
                       const assists = live?.stats?.[id]?.assists ?? 0;
-                      const subline = finalized
-                        ? mins === 0
-                          ? "Did not play"
-                          : `${mins}'  ·  ${goals}G ${assists}A`
-                        : !isLocked
-                          ? "Yet to start"
-                          : mins === 0
-                            ? "Yet to play"
-                            : `${mins}'  ·  ${goals}G ${assists}A`;
+                      const isCap = id === captainId;
+                      // No per-player minutes in the WC feed, so the subline is the
+                      // captain marker + goals/assists (from the match feed), not minutes.
+                      const gaLabel =
+                        goals > 0 || assists > 0 ? `${goals}G · ${assists}A` : null;
+                      const capLabel = isCap ? "Captain ×2" : null;
+                      const subline = !isLocked
+                        ? "Yet to start"
+                        : [capLabel, gaLabel].filter(Boolean).join("  ·  ") || undefined;
                       return (
                         <PlayerRow
                           key={`${id}-${i}`}

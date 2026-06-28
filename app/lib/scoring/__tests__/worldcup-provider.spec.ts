@@ -79,3 +79,35 @@ describe("isFifaRoundSettled", () => {
     expect(isFifaRoundSettled(undefined)).toBe(false);
   });
 });
+
+import { getPhasePoints } from "../phase-points";
+import type { ScoreProvider } from "../provider";
+
+describe("roundPoints object shape (real FIFA data) + phase sum", () => {
+  // FIFA returns roundPoints as an OBJECT keyed by round id, e.g. {1:19,2:14,3:7},
+  // NOT a 0-indexed array. `roundPoints[round]` must still resolve per round.
+  const objPlayers = [
+    {
+      id: 38, firstName: "Lionel", lastName: "Messi", knownName: null, squadId: 2,
+      position: "FWD", price: 10, status: "playing", percentSelected: 0,
+      stats: { totalPoints: 40, avgPoints: 0, form: 0, lastRoundPoints: 7,
+        roundPoints: { 1: 19, 2: 14, 3: 7 } as unknown as number[] },
+    },
+  ] as unknown as FifaFantasyPlayer[];
+
+  it("resolves each round id from the object", () => {
+    expect(fifaRoundPointsToMap(objPlayers, 1).get(38)).toBe(19);
+    expect(fifaRoundPointsToMap(objPlayers, 2).get(38)).toBe(14);
+    expect(fifaRoundPointsToMap(objPlayers, 3).get(38)).toBe(7);
+  });
+
+  it("getPhasePoints sums all phase rounds (group = 1+2+3 = 40)", async () => {
+    const provider = {
+      id: "test", async getPlayers() { return []; },
+      async getRoundPoints(r: number) { return fifaRoundPointsToMap(objPlayers, r); },
+      async isRoundSettled() { return true; },
+    } as unknown as ScoreProvider;
+    const m = await getPhasePoints(provider, [1, 2, 3]);
+    expect(m.get(38)).toBe(40);
+  });
+});

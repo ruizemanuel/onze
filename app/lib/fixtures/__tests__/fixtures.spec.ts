@@ -4,6 +4,7 @@ import {
   mapRounds,
   currentRoundIndex,
   groupMatchesByDay,
+  aggregatePlayerGoals,
   stageLabel,
   shortDate,
 } from "../fixtures";
@@ -147,5 +148,25 @@ describe("mapMatch goals", () => {
   });
   it("defaults to no goals when the feed arrays are null", () => {
     expect(mapMatch(fifaMatch({})).goals).toEqual([]);
+  });
+});
+
+describe("aggregatePlayerGoals", () => {
+  it("counts goals (scorer) + assists (assister) per player, phase rounds only", () => {
+    const rounds = mapRounds([
+      { id: 1, status: "complete", stage: "GROUP", tournaments: [
+        fifaMatch({ id: 1,
+          homeGoalScorersAssists: [{ playerId: 10, assistId: 11 }, { playerId: 10, assistId: null }],
+          awayGoalScorersAssists: [{ playerId: 20, assistId: null }] }),
+      ] },
+      { id: 4, status: "scheduled", stage: "R32", tournaments: [
+        fifaMatch({ id: 2, homeGoalScorersAssists: [{ playerId: 99, assistId: 10 }] }),
+      ] },
+    ]);
+    const m = aggregatePlayerGoals(rounds, [1, 2, 3]);
+    expect(m.get(10)).toEqual({ goals: 2, assists: 0 });
+    expect(m.get(11)).toEqual({ goals: 0, assists: 1 });
+    expect(m.get(20)).toEqual({ goals: 1, assists: 0 });
+    expect(m.get(99)).toBeUndefined();
   });
 });
