@@ -50,6 +50,13 @@ export function fifaRoundPointsToMap(
   return m;
 }
 
+/** A FIFA round is settled (final) once its status is "complete" — FIFA's marker for a
+ * finished round. ("closed" kept for forward-compat; it is NOT the value FIFA emits.)
+ * Pure so the finalize/reveal gate is unit-testable. */
+export function isFifaRoundSettled(status: string | undefined): boolean {
+  return status === "complete" || status === "closed";
+}
+
 export const OnzeWcScoreProvider: ScoreProvider = {
   id: "fifa-wc",
   async getPlayers() {
@@ -61,6 +68,6 @@ export const OnzeWcScoreProvider: ScoreProvider = {
   },
   async isRoundSettled(round) {
     const rounds = await getFifaRounds();
-    return rounds.find((r) => r.id === round)?.status === "closed";
+    return isFifaRoundSettled(rounds.find((r) => r.id === round)?.status);
   },
 };

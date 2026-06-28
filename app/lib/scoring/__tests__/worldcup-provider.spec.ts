@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   fifaPlayersToProviderPlayers,
   fifaRoundPointsToMap,
+  isFifaRoundSettled,
 } from "../worldcup-provider";
 import type { FifaFantasyPlayer, FifaSquad } from "@/lib/worldcup/client";
 
@@ -62,5 +63,19 @@ describe("fifaRoundPointsToMap", () => {
     const m = fifaRoundPointsToMap(players, 2); // roundPoints index 2
     expect(m.get(10)).toBe(4); // [0,3,4][2]
     expect(m.get(20)).toBe(0); // [0,5][2] -> undefined -> 0
+  });
+});
+
+describe("isFifaRoundSettled", () => {
+  it("treats FIFA 'complete' rounds as settled (FIFA's finished marker)", () => {
+    expect(isFifaRoundSettled("complete")).toBe(true);
+  });
+  it("treats 'closed' as settled too (forward-compat)", () => {
+    expect(isFifaRoundSettled("closed")).toBe(true);
+  });
+  it("is NOT settled while scheduled / playing / undefined", () => {
+    expect(isFifaRoundSettled("scheduled")).toBe(false);
+    expect(isFifaRoundSettled("playing")).toBe(false);
+    expect(isFifaRoundSettled(undefined)).toBe(false);
   });
 });
