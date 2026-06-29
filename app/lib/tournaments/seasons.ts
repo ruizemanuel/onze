@@ -136,6 +136,16 @@ export function fechaLabel(tournamentId: number): string {
   return `#${tournamentId}`;
 }
 
+/** Human phase label for a coach commitment round (mw): WC round 1 -> "Group Stage",
+ * round 4 -> "Knockout". Falls back to "Matchweek N" for providers without phase labels. */
+export function roundPhaseLabel(round: number): string {
+  for (const s of SEASONS) {
+    const f = s.fechas.find((x) => x.round === round);
+    if (f) return f.label ?? `GW${f.round}`;
+  }
+  return `Matchweek ${round}`;
+}
+
 /** The tournamentId of the phase immediately before `tournamentId` in its season
  * (e.g. Group Stage for the Knockout pool), or undefined if it's the first phase. */
 export function priorPhaseTid(season: Season, tournamentId: number): number | undefined {

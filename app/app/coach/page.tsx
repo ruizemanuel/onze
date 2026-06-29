@@ -85,7 +85,7 @@ export default async function CoachPage() {
             Onze Coach
           </h1>
           <p className="mt-2 text-sm text-white/50">
-            Picks are committed onchain before each matchweek and revealed
+            Picks are committed onchain before each phase and revealed
             after. The Coach&apos;s accuracy is tracked via ERC-8004
             reputation.
           </p>
@@ -134,7 +134,7 @@ export default async function CoachPage() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center lg:col-span-2">
               <p className="text-sm text-white/60">No picks yet.</p>
               <p className="mt-1 text-[11px] text-white/40">
-                The Coach will publish picks before the next matchweek.
+                The Coach will publish picks before the next phase.
               </p>
             </div>
           )}

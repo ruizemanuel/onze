@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useFallbackPhoto } from "@/hooks/useFallbackPhoto";
 import { kitUrl } from "@/lib/players/kit";
+import { roundPhaseLabel } from "@/lib/tournaments/seasons";
 
 export type CoachPickRow = {
   mw: number;
@@ -36,15 +37,12 @@ export function CoachPickCard({ row }: { row: CoachPickRow }) {
     <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
       <header className="flex items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/50">
-            Matchweek
-          </span>
-          <span className="font-display text-3xl leading-none text-white tabular-nums">
-            {row.mw}
+          <span className="font-display text-2xl leading-none text-white">
+            {roundPhaseLabel(row.mw)}
           </span>
           {/* Reveal status indicator. Uses the gold accent (matches the
               "X% ACCURATE" badge on the right) instead of the primary green,
-              so it doesn't read as "this matchweek is currently active"
+              so it doesn't read as "this phase is currently active"
               after the tournament has settled. */}
           <span
             className={
