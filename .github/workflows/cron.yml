@@ -22,6 +22,14 @@ on:
     # scored over the full phase, not a single round. Two attempts.
     - cron: "0 14 28 6 *"   # reveal mw=1 — Jun 28 14:00 UTC
     - cron: "0 14 29 6 *"   # reveal mw=1 retry — Jun 29 14:00 UTC
+    # KNOCKOUT (tournament #1, FIFA rounds 4-8; lock Jun 29 15:00, end Jul 20 00:00).
+    - cron: "0 12 20 7 *"   # finalize-mw t=1 — Jul 20 12:00 UTC (submit + finalize)
+    - cron: "0 12 21 7 *"   # finalize-mw t=1 retry — Jul 21 12:00 UTC
+    - cron: "0 14 20 7 *"   # reveal mw=4 — Jul 20 14:00 UTC (after the whole KO settles)
+    - cron: "0 14 21 7 *"   # reveal mw=4 retry — Jul 21 14:00 UTC
+    # SEASON finalize (season #0) — Phase 8, after the KO pool finalizes.
+    - cron: "0 16 20 7 *"   # finalize-season s=0 — Jul 20 16:00 UTC
+    - cron: "0 16 21 7 *"   # finalize-season s=0 retry — Jul 21 16:00 UTC
     # Daily leaderboard recompute (all active-season fechas)
     - cron: "0 0 * * *"
   workflow_dispatch:
@@ -52,6 +60,12 @@ jobs:
               "0 14 29 6 *") URL="/api/coach/reveal?mw=1" ;;
               "0 12 28 6 *") URL="/api/oracle/finalize-mw?t=0" ;;
               "0 12 29 6 *") URL="/api/oracle/retry?t=0" ;;
+              "0 12 20 7 *") URL="/api/oracle/finalize-mw?t=1" ;;
+              "0 12 21 7 *") URL="/api/oracle/retry?t=1" ;;
+              "0 14 20 7 *") URL="/api/coach/reveal?mw=4" ;;
+              "0 14 21 7 *") URL="/api/coach/reveal?mw=4" ;;
+              "0 16 20 7 *") URL="/api/oracle/finalize-season?s=0" ;;
+              "0 16 21 7 *") URL="/api/oracle/finalize-season?s=0" ;;
               "0 0 * * *")   URL="/api/leaderboard/recompute" ;;
               *)             URL="/api/leaderboard/recompute" ;;
             esac
