@@ -4,10 +4,11 @@ import { leaderboardCache } from "@/lib/db/schema";
 import { getActiveSeason, seasonFechaIds } from "@/lib/tournaments/seasons";
 import { LeaderboardView, type LeaderboardRow } from "./LeaderboardView";
 
-async function loadRows(): Promise<LeaderboardRow[]> {
+async function loadRows(tid?: number): Promise<LeaderboardRow[]> {
   try {
     const db = getDb();
-    const ids = seasonFechaIds(getActiveSeason());
+    // tid set → single-phase standings (that pool's points); else → season aggregate.
+    const ids = tid !== undefined ? [tid] : seasonFechaIds(getActiveSeason());
     const rows = await db
       .select({
         wallet: leaderboardCache.wallet,
@@ -37,7 +38,7 @@ async function loadRows(): Promise<LeaderboardRow[]> {
   }
 }
 
-export async function Leaderboard() {
-  const rows = await loadRows();
+export async function Leaderboard({ tid }: { tid?: number }) {
+  const rows = await loadRows(tid);
   return <LeaderboardView rows={rows} />;
 }

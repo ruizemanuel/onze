@@ -8,7 +8,17 @@ import { getActiveSeason, fechaLabel } from "@/lib/tournaments/seasons";
  * navigates to `hrefFor(tid)`. We don't use a native <select> because its option
  * popup can't be reliably themed across browsers (renders white on Windows).
  * Renders nothing for single-phase seasons (e.g. Premier). */
-export function PhaseSwitcher({ currentTid, hrefFor }: { currentTid?: number; hrefFor: (tid: number) => string }) {
+export function PhaseSwitcher({
+  currentTid,
+  hrefFor,
+  overallHref,
+  overallLabel = "Overall",
+}: {
+  currentTid?: number;
+  hrefFor: (tid: number) => string;
+  overallHref?: string;
+  overallLabel?: string;
+}) {
   const router = useRouter();
   const fechas = getActiveSeason().fechas;
   const [open, setOpen] = useState(false);
@@ -32,7 +42,13 @@ export function PhaseSwitcher({ currentTid, hrefFor }: { currentTid?: number; hr
 
   if (fechas.length < 2) return null;
 
-  const currentLabel = currentTid != null ? fechaLabel(currentTid) : "Phase…";
+  const hasOverall = overallHref !== undefined;
+  const isOverall = hasOverall && currentTid == null;
+  const currentLabel = isOverall
+    ? overallLabel
+    : currentTid != null
+      ? fechaLabel(currentTid)
+      : "Phase…";
 
   return (
     <div ref={ref} className="relative">
@@ -67,6 +83,23 @@ export function PhaseSwitcher({ currentTid, hrefFor }: { currentTid?: number; hr
           role="listbox"
           className="absolute right-0 z-50 mt-2 min-w-[10rem] overflow-hidden rounded-xl border border-white/10 bg-[#13121A] py-1 shadow-xl shadow-black/50"
         >
+          {hasOverall && (
+            <li role="option" aria-selected={isOverall}>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  router.push(overallHref as Route);
+                }}
+                className={
+                  "block w-full px-3 py-2 text-left text-sm transition cursor-pointer " +
+                  (isOverall ? "bg-[#00DF7C]/15 text-[#00DF7C]" : "text-white/80 hover:bg-white/10")
+                }
+              >
+                {overallLabel}
+              </button>
+            </li>
+          )}
           {fechas.map((f) => {
             const selected = f.tournamentId === currentTid;
             return (
