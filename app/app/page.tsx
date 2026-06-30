@@ -21,20 +21,21 @@ async function readPoolStats() {
   try {
     const pool = await resolveActivePool(client, DEFAULT_NETWORK);
     if (!pool) {
-      return { players: 0, poolUsd: 0, prizeUsd: 0 };
+      return { players: 0, poolUsd: 0, prizeUsd: 0, lockMs: null };
     }
-    const [deposit, seedAmount, participants] = await Promise.all([
+    const [deposit, seedAmount, participants, lockTime] = await Promise.all([
       client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "deposit" }) as Promise<bigint>,
       client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "seedAmount" }) as Promise<bigint>,
       client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "participantsLength" }) as Promise<bigint>,
+      client.readContract({ address: pool, abi: pick5PoolAbi, functionName: "lockTime" }) as Promise<bigint>,
     ]);
     const players = Number(participants);
     const poolTotal = seedAmount + deposit * participants;
     const poolUsd = Number(poolTotal) / 1_000_000;
     const prizeUsd = Number(seedAmount) / 1_000_000;
-    return { players, poolUsd, prizeUsd };
+    return { players, poolUsd, prizeUsd, lockMs: Number(lockTime) * 1000 };
   } catch {
-    return { players: 0, poolUsd: 0, prizeUsd: 0 };
+    return { players: 0, poolUsd: 0, prizeUsd: 0, lockMs: null };
   }
 }
 
@@ -59,16 +60,22 @@ const PREVIEW_LINEUP: PitchSlot[] = [
   { kitUrl: "/kits/46.png", team: "URU", position: "FWD", teamColor: "#5CBFEB" },
 ];
 
-// Interim: World Cup 2026 kickoff (group-stage lock). Replace with the real
-// on-chain lockTime at deploy (Tanda 5) — exact kickoff hour TBD.
-const LOCK_DATE = new Date("2026-06-11T18:00:00Z");
-
 function timeUntil(target: Date): string {
   const ms = Math.max(0, target.getTime() - Date.now());
   if (ms === 0) return "Locked";
   const days = Math.floor(ms / 86_400_000);
   const hours = Math.floor((ms % 86_400_000) / 3_600_000);
   return `${String(days).padStart(2, "0")}d ${String(hours).padStart(2, "0")}h`;
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "Mon · Jun 29 · 15:00 UTC" from a Date, in UTC. */
+function formatLockUtc(d: Date): string {
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${WEEKDAYS[d.getUTCDay()]} · ${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()} · ${hh}:${mm} UTC`;
 }
 
 const DESKTOP_TICKER = [
@@ -80,8 +87,10 @@ const DESKTOP_TICKER = [
 ] as const;
 
 export default async function LandingPage() {
-  const locksIn = timeUntil(LOCK_DATE);
-  const { players, poolUsd, prizeUsd } = await readPoolStats();
+  const { players, poolUsd, prizeUsd, lockMs } = await readPoolStats();
+  const lockDate = lockMs ? new Date(lockMs) : null;
+  const locksIn = lockDate ? timeUntil(lockDate) : "—";
+  const lockSub = lockDate ? formatLockUtc(lockDate) : "TBD";
   const fmt = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
 
   return (
@@ -124,7 +133,7 @@ export default async function LandingPage() {
             <Stat
               label="Locks in"
               value={locksIn}
-              sub="Thu · Jun 11 · 18:00 UTC"
+              sub={lockSub}
             />
           </div>
         </section>
